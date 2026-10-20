@@ -5,7 +5,7 @@ REVIEWER: none
 STATUS: review
 SESSION: 767920940306581773
 PR: https://github.com/veltylabs/cash_manager/pull/1
-REVIEWED_COMMIT: e21d75d5a1f0d1a7a16218172613886d3f2cf78d
+REVIEWED_COMMIT: 263530c6733e8542dca40d102d5cc47cba95f36d
 ---
 
 > Read AGENTS.md at the repo root before any change (this is a new repo: AGENTS.md and go.mod already exist,
