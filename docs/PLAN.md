@@ -2,6 +2,8 @@
 PLAN: "feat: cash_manager — per-person cash shifts, the first money.Sink, and the Today/Close/Reorder/30-day screens"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 767920940306581773
 ---
 
 > Read AGENTS.md at the repo root before any change (this is a new repo: AGENTS.md and go.mod already exist,
