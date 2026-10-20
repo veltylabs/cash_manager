@@ -2,8 +2,10 @@
 PLAN: "feat: cash_manager — per-person cash shifts, the first money.Sink, and the Today/Close/Reorder/30-day screens"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 767920940306581773
+PR: https://github.com/veltylabs/cash_manager/pull/1
+REVIEWED_COMMIT: e21d75d5a1f0d1a7a16218172613886d3f2cf78d
 ---
 
 > Read AGENTS.md at the repo root before any change (this is a new repo: AGENTS.md and go.mod already exist,
