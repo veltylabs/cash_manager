@@ -27,9 +27,10 @@ func (f *fakeForecast) PendingAccruals(tenantId string, from, to time.Unix) ([]c
 func main() {
 	db := orm.New(mem.New())
 	broker := &mock.Broker{}
+	idGen, _ := unixid.NewUnixID()
 
 	deps := cashmanager.Deps{
-		IDs:        unixid.NewGenerator(),
+		IDs:        idGen,
 		TenantID:   "t1",
 		LowStock:   &fakeLowStock{},
 		Forecast:   &fakeForecast{},
@@ -37,9 +38,7 @@ func main() {
 	}
 
 	module := cashmanager.New(db, deps)
-
-	reg := loopback.NewRegistry()
-	module.MountOperations(reg)
+	_ = loopback.WithTenant("t1", module)
 
 	// Normally this connects to DOM
 }
