@@ -2,8 +2,10 @@
 PLAN: "refactor!: build destinations — web/browser.go and ui/browser.go with //go:build browser"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 16532598082358078486
+PR: https://github.com/veltylabs/cash_manager/pull/2
+REVIEWED_COMMIT: 4abf422e794199b6f7e9ac81360dc3b6ee620957
 ---
 
 > Read AGENTS.md at the repo root before any change.
