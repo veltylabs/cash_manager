@@ -3,7 +3,7 @@ PLAN: "fix: a shift counts only its cashier's cash; facts keep means and actor"
 TAG: v0.2.0
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: closed
 SESSION: 17131905432708726339
 ---
 

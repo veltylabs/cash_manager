@@ -24,6 +24,20 @@ Domain scope: Manages cash shifts per person, opening/closing with cash count, a
 | Reorder | `m.reorder` | `Read` |
 | ThirtyDay | `m.thirtyDay` | `Read` |
 
+## Cierre de turno y arqueo de caja
+
+Al cerrar un turno mediante `CloseShift`:
+1. Se recupera el turno por `TenantId` e `Id`.
+2. Se consultan los `stored_fact` del tenant ocurridos entre `shift.OpenedAt` y la hora de cierre.
+3. Se filtra estrictamente por:
+   - `Currency == shift.Currency`
+   - `Means == money.MeansCash`
+   - `Actor == shift.CashierId`
+4. Se calcula el efectivo esperado: `OpeningCash` sumando cobros (`money.Charged`) y restando devoluciones (`money.Refunded`).
+5. La diferencia queda registrada en `shift.Difference = ClosingCashCounted - ClosingCashExpected`.
+
+Cualquier cobro con tarjeta, transferencia o hecho registrado por otro cajero permanece persistido en `stored_fact` para reportería y conciliación global, pero no ingresa al conteo físico de la gaveta de caja de ese turno.
+
 ## Composition Root Example
 
 ```go

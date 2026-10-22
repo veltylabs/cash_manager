@@ -68,6 +68,8 @@ func (m *Module) Accept(f money.Fact) error {
 		Party:      f.Party,
 		At:         f.At,
 		DueAt:      f.DueAt,
+		Means:      string(f.Means),
+		Actor:      f.Actor,
 	}
 
 	if err := fact.Validate(model.ActionCreate); err != nil {
