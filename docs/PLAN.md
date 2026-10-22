@@ -3,6 +3,8 @@ PLAN: "fix: a shift counts only its cashier's cash; facts keep means and actor"
 TAG: v0.2.0
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 17131905432708726339
 ---
 
 > Read AGENTS.md at the repo root before any change.
