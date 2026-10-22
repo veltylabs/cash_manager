@@ -9,7 +9,7 @@ require (
 	webtyp.com/model v0.2.4
 	webtyp.com/money v0.1.3
 	webtyp.com/orm v0.12.13
-	webtyp.com/router v0.4.5
+	webtyp.com/router v0.4.6
 	webtyp.com/storage v0.1.9
 	webtyp.com/time v0.6.2
 	webtyp.com/unixid v0.3.1
