@@ -9,34 +9,30 @@ import (
 )
 
 type Shift struct {
-	Id                  string
-	TenantId            string
-	CashierId           string
-	Status              string
-	OpeningCash         int64
-	ClosingCashCounted  int64
+	Id string
+	TenantId string
+	CashierId string
+	Status string
+	OpeningCash int64
+	ClosingCashCounted int64
 	ClosingCashExpected int64
-	Difference          int64
-	Currency            string
-	OpenedAt            time.Unix
-	ClosedAt            time.Unix
-	UpdatedAt           time.Nano
+	Difference int64
+	Currency string
+	OpenedAt time.Unix
+	ClosedAt time.Unix
+	UpdatedAt time.Nano
 }
 
 func (m *Shift) ModelName() string { return "cash_shift" }
 
 func (m *Shift) Schema() []model.Field { return ShiftModel.Fields }
 
-func (m *Shift) Pointers() []any {
-	return []any{&m.Id, &m.TenantId, &m.CashierId, &m.Status, &m.OpeningCash, &m.ClosingCashCounted, &m.ClosingCashExpected, &m.Difference, &m.Currency, (*int64)(&m.OpenedAt), (*int64)(&m.ClosedAt), (*int64)(&m.UpdatedAt)}
-}
+func (m *Shift) Pointers() []any { return []any{&m.Id, &m.TenantId, &m.CashierId, &m.Status, &m.OpeningCash, &m.ClosingCashCounted, &m.ClosingCashExpected, &m.Difference, &m.Currency, (*int64)(&m.OpenedAt), (*int64)(&m.ClosedAt), (*int64)(&m.UpdatedAt)} }
 
 func (m *Shift) IsNil() bool { return m == nil }
 
 func (m *Shift) EncodeFields(w model.FieldWriter) {
-	if m.Id != "" {
-		w.String("id", m.Id)
-	}
+	if m.Id != "" { w.String("id", m.Id) }
 	w.String("tenant_id", m.TenantId)
 	w.String("cashier_id", m.CashierId)
 	w.String("status", m.Status)
@@ -46,59 +42,31 @@ func (m *Shift) EncodeFields(w model.FieldWriter) {
 	w.Int("difference", m.Difference)
 	w.String("currency", m.Currency)
 	w.Int("opened_at", int64(m.OpenedAt))
-	if m.ClosedAt != 0 {
-		w.Int("closed_at", int64(m.ClosedAt))
-	}
-	if m.UpdatedAt != 0 {
-		w.Int("updated_at", int64(m.UpdatedAt))
-	}
+	if m.ClosedAt != 0 { w.Int("closed_at", int64(m.ClosedAt)) }
+	if m.UpdatedAt != 0 { w.Int("updated_at", int64(m.UpdatedAt)) }
 }
 
 func (m *Shift) DecodeFields(r model.FieldReader) {
-	if v, ok := r.String("id"); ok {
-		m.Id = v
-	}
-	if v, ok := r.String("tenant_id"); ok {
-		m.TenantId = v
-	}
-	if v, ok := r.String("cashier_id"); ok {
-		m.CashierId = v
-	}
-	if v, ok := r.String("status"); ok {
-		m.Status = v
-	}
-	if v, ok := r.Int("opening_cash"); ok {
-		m.OpeningCash = v
-	}
-	if v, ok := r.Int("closing_cash_counted"); ok {
-		m.ClosingCashCounted = v
-	}
-	if v, ok := r.Int("closing_cash_expected"); ok {
-		m.ClosingCashExpected = v
-	}
-	if v, ok := r.Int("difference"); ok {
-		m.Difference = v
-	}
-	if v, ok := r.String("currency"); ok {
-		m.Currency = v
-	}
-	if v, ok := r.Int("opened_at"); ok {
-		m.OpenedAt = time.Unix(v)
-	}
-	if v, ok := r.Int("closed_at"); ok {
-		m.ClosedAt = time.Unix(v)
-	}
-	if v, ok := r.Int("updated_at"); ok {
-		m.UpdatedAt = time.Nano(v)
-	}
+	if v, ok := r.String("id"); ok { m.Id = v }
+	if v, ok := r.String("tenant_id"); ok { m.TenantId = v }
+	if v, ok := r.String("cashier_id"); ok { m.CashierId = v }
+	if v, ok := r.String("status"); ok { m.Status = v }
+	if v, ok := r.Int("opening_cash"); ok { m.OpeningCash = v }
+	if v, ok := r.Int("closing_cash_counted"); ok { m.ClosingCashCounted = v }
+	if v, ok := r.Int("closing_cash_expected"); ok { m.ClosingCashExpected = v }
+	if v, ok := r.Int("difference"); ok { m.Difference = v }
+	if v, ok := r.String("currency"); ok { m.Currency = v }
+	if v, ok := r.Int("opened_at"); ok { m.OpenedAt = time.Unix(v) }
+	if v, ok := r.Int("closed_at"); ok { m.ClosedAt = time.Unix(v) }
+	if v, ok := r.Int("updated_at"); ok { m.UpdatedAt = time.Nano(v) }
 }
 
 type ShiftList []*Shift
 
-func (s *ShiftList) Len() int                         { return len(*s) }
-func (s *ShiftList) At(i int) model.Fielder           { return (*s)[i] }
-func (s *ShiftList) Append() model.Fielder            { v := &Shift{}; *s = append(*s, v); return v }
-func (s *ShiftList) IsNil() bool                      { return s == nil }
+func (s *ShiftList) Len() int             { return len(*s) }
+func (s *ShiftList) At(i int) model.Fielder { return (*s)[i] }
+func (s *ShiftList) Append() model.Fielder  { v := &Shift{}; *s = append(*s, v); return v }
+func (s *ShiftList) IsNil() bool          { return s == nil }
 func (s *ShiftList) EncodeFields(_ model.FieldWriter) {}
 func (s *ShiftList) DecodeFields(_ model.FieldReader) {}
 
@@ -107,31 +75,31 @@ func (m *Shift) Validate(action byte) error {
 }
 
 var Shift_ = struct {
-	Id                  string
-	TenantId            string
-	CashierId           string
-	Status              string
-	OpeningCash         string
-	ClosingCashCounted  string
+	Id string
+	TenantId string
+	CashierId string
+	Status string
+	OpeningCash string
+	ClosingCashCounted string
 	ClosingCashExpected string
-	Difference          string
-	Currency            string
-	OpenedAt            string
-	ClosedAt            string
-	UpdatedAt           string
+	Difference string
+	Currency string
+	OpenedAt string
+	ClosedAt string
+	UpdatedAt string
 }{
-	Id:                  "id",
-	TenantId:            "tenant_id",
-	CashierId:           "cashier_id",
-	Status:              "status",
-	OpeningCash:         "opening_cash",
-	ClosingCashCounted:  "closing_cash_counted",
+	Id: "id",
+	TenantId: "tenant_id",
+	CashierId: "cashier_id",
+	Status: "status",
+	OpeningCash: "opening_cash",
+	ClosingCashCounted: "closing_cash_counted",
 	ClosingCashExpected: "closing_cash_expected",
-	Difference:          "difference",
-	Currency:            "currency",
-	OpenedAt:            "opened_at",
-	ClosedAt:            "closed_at",
-	UpdatedAt:           "updated_at",
+	Difference: "difference",
+	Currency: "currency",
+	OpenedAt: "opened_at",
+	ClosedAt: "closed_at",
+	UpdatedAt: "updated_at",
 }
 
 func ReadOneShift(qb *orm.QB, model *Shift) (*Shift, error) {
@@ -152,27 +120,27 @@ func ReadAllShift(qb *orm.QB) (ShiftList, error) {
 }
 
 type StoredFact struct {
-	Id         string
-	TenantId   string
-	Kind       string
-	Side       int64
-	Amount     int64
-	Currency   string
-	Scope      string
+	Id string
+	TenantId string
+	Kind string
+	Side int64
+	Amount int64
+	Currency string
+	Scope string
 	SourceType string
-	SourceId   string
-	Party      string
-	At         time.Unix
-	DueAt      time.Unix
+	SourceId string
+	Party string
+	At time.Unix
+	DueAt time.Unix
+	Means string
+	Actor string
 }
 
 func (m *StoredFact) ModelName() string { return "stored_fact" }
 
 func (m *StoredFact) Schema() []model.Field { return StoredFactModel.Fields }
 
-func (m *StoredFact) Pointers() []any {
-	return []any{&m.Id, &m.TenantId, &m.Kind, &m.Side, &m.Amount, &m.Currency, &m.Scope, &m.SourceType, &m.SourceId, &m.Party, (*int64)(&m.At), (*int64)(&m.DueAt)}
-}
+func (m *StoredFact) Pointers() []any { return []any{&m.Id, &m.TenantId, &m.Kind, &m.Side, &m.Amount, &m.Currency, &m.Scope, &m.SourceType, &m.SourceId, &m.Party, (*int64)(&m.At), (*int64)(&m.DueAt), &m.Means, &m.Actor} }
 
 func (m *StoredFact) IsNil() bool { return m == nil }
 
@@ -186,60 +154,36 @@ func (m *StoredFact) EncodeFields(w model.FieldWriter) {
 	w.String("scope", m.Scope)
 	w.String("source_type", m.SourceType)
 	w.String("source_id", m.SourceId)
-	if m.Party != "" {
-		w.String("party", m.Party)
-	}
+	if m.Party != "" { w.String("party", m.Party) }
 	w.Int("at", int64(m.At))
-	if m.DueAt != 0 {
-		w.Int("due_at", int64(m.DueAt))
-	}
+	if m.DueAt != 0 { w.Int("due_at", int64(m.DueAt)) }
+	if m.Means != "" { w.String("means", m.Means) }
+	if m.Actor != "" { w.String("actor", m.Actor) }
 }
 
 func (m *StoredFact) DecodeFields(r model.FieldReader) {
-	if v, ok := r.String("id"); ok {
-		m.Id = v
-	}
-	if v, ok := r.String("tenant_id"); ok {
-		m.TenantId = v
-	}
-	if v, ok := r.String("kind"); ok {
-		m.Kind = v
-	}
-	if v, ok := r.Int("side"); ok {
-		m.Side = v
-	}
-	if v, ok := r.Int("amount"); ok {
-		m.Amount = v
-	}
-	if v, ok := r.String("currency"); ok {
-		m.Currency = v
-	}
-	if v, ok := r.String("scope"); ok {
-		m.Scope = v
-	}
-	if v, ok := r.String("source_type"); ok {
-		m.SourceType = v
-	}
-	if v, ok := r.String("source_id"); ok {
-		m.SourceId = v
-	}
-	if v, ok := r.String("party"); ok {
-		m.Party = v
-	}
-	if v, ok := r.Int("at"); ok {
-		m.At = time.Unix(v)
-	}
-	if v, ok := r.Int("due_at"); ok {
-		m.DueAt = time.Unix(v)
-	}
+	if v, ok := r.String("id"); ok { m.Id = v }
+	if v, ok := r.String("tenant_id"); ok { m.TenantId = v }
+	if v, ok := r.String("kind"); ok { m.Kind = v }
+	if v, ok := r.Int("side"); ok { m.Side = v }
+	if v, ok := r.Int("amount"); ok { m.Amount = v }
+	if v, ok := r.String("currency"); ok { m.Currency = v }
+	if v, ok := r.String("scope"); ok { m.Scope = v }
+	if v, ok := r.String("source_type"); ok { m.SourceType = v }
+	if v, ok := r.String("source_id"); ok { m.SourceId = v }
+	if v, ok := r.String("party"); ok { m.Party = v }
+	if v, ok := r.Int("at"); ok { m.At = time.Unix(v) }
+	if v, ok := r.Int("due_at"); ok { m.DueAt = time.Unix(v) }
+	if v, ok := r.String("means"); ok { m.Means = v }
+	if v, ok := r.String("actor"); ok { m.Actor = v }
 }
 
 type StoredFactList []*StoredFact
 
-func (s *StoredFactList) Len() int                         { return len(*s) }
-func (s *StoredFactList) At(i int) model.Fielder           { return (*s)[i] }
-func (s *StoredFactList) Append() model.Fielder            { v := &StoredFact{}; *s = append(*s, v); return v }
-func (s *StoredFactList) IsNil() bool                      { return s == nil }
+func (s *StoredFactList) Len() int             { return len(*s) }
+func (s *StoredFactList) At(i int) model.Fielder { return (*s)[i] }
+func (s *StoredFactList) Append() model.Fielder  { v := &StoredFact{}; *s = append(*s, v); return v }
+func (s *StoredFactList) IsNil() bool          { return s == nil }
 func (s *StoredFactList) EncodeFields(_ model.FieldWriter) {}
 func (s *StoredFactList) DecodeFields(_ model.FieldReader) {}
 
@@ -248,31 +192,35 @@ func (m *StoredFact) Validate(action byte) error {
 }
 
 var StoredFact_ = struct {
-	Id         string
-	TenantId   string
-	Kind       string
-	Side       string
-	Amount     string
-	Currency   string
-	Scope      string
+	Id string
+	TenantId string
+	Kind string
+	Side string
+	Amount string
+	Currency string
+	Scope string
 	SourceType string
-	SourceId   string
-	Party      string
-	At         string
-	DueAt      string
+	SourceId string
+	Party string
+	At string
+	DueAt string
+	Means string
+	Actor string
 }{
-	Id:         "id",
-	TenantId:   "tenant_id",
-	Kind:       "kind",
-	Side:       "side",
-	Amount:     "amount",
-	Currency:   "currency",
-	Scope:      "scope",
+	Id: "id",
+	TenantId: "tenant_id",
+	Kind: "kind",
+	Side: "side",
+	Amount: "amount",
+	Currency: "currency",
+	Scope: "scope",
 	SourceType: "source_type",
-	SourceId:   "source_id",
-	Party:      "party",
-	At:         "at",
-	DueAt:      "due_at",
+	SourceId: "source_id",
+	Party: "party",
+	At: "at",
+	DueAt: "due_at",
+	Means: "means",
+	Actor: "actor",
 }
 
 func ReadOneStoredFact(qb *orm.QB, model *StoredFact) (*StoredFact, error) {

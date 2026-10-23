@@ -17,8 +17,30 @@ type TodayResponse struct {
 
 func (r *TodayResponse) Schema() []model.Field { return nil }
 func (r *TodayResponse) Pointers() []any { return nil }
-func (r *TodayResponse) EncodeFields(w model.FieldWriter) {}
-func (r *TodayResponse) DecodeFields(r2 model.FieldReader) {}
+func (r *TodayResponse) EncodeFields(w model.FieldWriter) {
+	if r.Shift != nil {
+		w.Object("shift", r.Shift)
+	}
+	arr := w.Array("facts", len(r.Facts))
+	for _, f := range r.Facts {
+		arr.Object(f)
+	}
+	arr.Close()
+}
+func (r *TodayResponse) DecodeFields(r2 model.FieldReader) {
+	shift := &Shift{}
+	if r2.Object("shift", shift) {
+		r.Shift = shift
+	}
+	if ar, ok := r2.Array("facts"); ok {
+		r.Facts = make(StoredFactList, ar.Len())
+		for i := 0; i < ar.Len(); i++ {
+			f := &StoredFact{}
+			ar.Object(i, f)
+			r.Facts[i] = f
+		}
+	}
+}
 func (r *TodayResponse) IsNil() bool { return r == nil }
 
 type ReorderResponse struct {
@@ -27,8 +49,21 @@ type ReorderResponse struct {
 
 func (r *ReorderResponse) Schema() []model.Field { return nil }
 func (r *ReorderResponse) Pointers() []any { return nil }
-func (r *ReorderResponse) EncodeFields(w model.FieldWriter) {}
-func (r *ReorderResponse) DecodeFields(r2 model.FieldReader) {}
+func (r *ReorderResponse) EncodeFields(w model.FieldWriter) {
+	arr := w.Array("items", len(r.Items))
+	for i := range r.Items {
+		arr.Object(&r.Items[i])
+	}
+	arr.Close()
+}
+func (r *ReorderResponse) DecodeFields(r2 model.FieldReader) {
+	if ar, ok := r2.Array("items"); ok {
+		r.Items = make([]LowStockItem, ar.Len())
+		for i := 0; i < ar.Len(); i++ {
+			ar.Object(i, &r.Items[i])
+		}
+	}
+}
 func (r *ReorderResponse) IsNil() bool { return r == nil }
 
 type ThirtyDayResponse struct {
@@ -38,8 +73,35 @@ type ThirtyDayResponse struct {
 
 func (r *ThirtyDayResponse) Schema() []model.Field { return nil }
 func (r *ThirtyDayResponse) Pointers() []any { return nil }
-func (r *ThirtyDayResponse) EncodeFields(w model.FieldWriter) {}
-func (r *ThirtyDayResponse) DecodeFields(r2 model.FieldReader) {}
+func (r *ThirtyDayResponse) EncodeFields(w model.FieldWriter) {
+	arr := w.Array("facts", len(r.Facts))
+	for _, f := range r.Facts {
+		arr.Object(f)
+	}
+	arr.Close()
+
+	arrF := w.Array("forecast", len(r.Forecast))
+	for i := range r.Forecast {
+		arrF.Object(&r.Forecast[i])
+	}
+	arrF.Close()
+}
+func (r *ThirtyDayResponse) DecodeFields(r2 model.FieldReader) {
+	if ar, ok := r2.Array("facts"); ok {
+		r.Facts = make(StoredFactList, ar.Len())
+		for i := 0; i < ar.Len(); i++ {
+			f := &StoredFact{}
+			ar.Object(i, f)
+			r.Facts[i] = f
+		}
+	}
+	if ar, ok := r2.Array("forecast"); ok {
+		r.Forecast = make([]ForecastLine, ar.Len())
+		for i := 0; i < ar.Len(); i++ {
+			ar.Object(i, &r.Forecast[i])
+		}
+	}
+}
 func (r *ThirtyDayResponse) IsNil() bool { return r == nil }
 
 func (m *Module) openShift(ctx router.Context) {
@@ -107,11 +169,11 @@ func (m *Module) closeShift(ctx router.Context) {
 		return
 	}
 
-	qb := m.db.Query(&Shift{})
+	shift := &Shift{}
+	qb := m.db.Query(shift)
 	qb.Where(Shift_.TenantId).Eq(args.TenantId)
 	qb.Where(Shift_.Id).Eq(args.Id)
 
-	shift := &Shift{}
 	_, err := ReadOneShift(qb, shift)
 	if err != nil {
 		if orm.IsNotFound(err) {
@@ -131,8 +193,8 @@ func (m *Module) closeShift(ctx router.Context) {
 
 	factQb := m.db.Query(&StoredFact{})
 	factQb.Where(StoredFact_.TenantId).Eq(args.TenantId)
-	factQb.Where(StoredFact_.At).Gte(shift.OpenedAt)
-	factQb.Where(StoredFact_.At).Lte(now)
+	factQb.Where(StoredFact_.At).Gte(int64(shift.OpenedAt))
+	factQb.Where(StoredFact_.At).Lte(int64(now))
 
 	facts, err := ReadAllStoredFact(factQb)
 	if err != nil {
@@ -142,12 +204,14 @@ func (m *Module) closeShift(ctx router.Context) {
 
 	expected := shift.OpeningCash
 	for _, f := range facts {
-		if f.Currency == shift.Currency {
-			if f.Kind == string(money.Charged) {
-				expected += f.Amount
-			} else if f.Kind == string(money.Refunded) {
-				expected -= f.Amount
-			}
+		if f.Currency != shift.Currency || f.Means != string(money.MeansCash) || f.Actor != shift.CashierId {
+			continue // otra moneda, tarjeta o transferencia, u otra cajera: no es efectivo de este turno
+		}
+		switch f.Kind {
+		case string(money.Charged):
+			expected += f.Amount
+		case string(money.Refunded):
+			expected -= f.Amount
 		}
 	}
 
@@ -201,8 +265,8 @@ func (m *Module) getToday(ctx router.Context) {
 	now := time.NowUnix()
 	factQb := m.db.Query(&StoredFact{})
 	factQb.Where(StoredFact_.TenantId).Eq(args.TenantId)
-	factQb.Where(StoredFact_.At).Gte(shift.OpenedAt)
-	factQb.Where(StoredFact_.At).Lte(now)
+	factQb.Where(StoredFact_.At).Gte(int64(shift.OpenedAt))
+	factQb.Where(StoredFact_.At).Lte(int64(now))
 
 	facts, err := ReadAllStoredFact(factQb)
 	if err != nil {
@@ -231,8 +295,8 @@ func (m *Module) listStoredFacts(ctx router.Context) {
 	qb := m.db.Query(&StoredFact{})
 	qb.Where(StoredFact_.TenantId).Eq(args.TenantId)
 	qb.Where(StoredFact_.Scope).Eq(args.Scope)
-	qb.Where(StoredFact_.At).Gte(args.From)
-	qb.Where(StoredFact_.At).Lte(args.To)
+	qb.Where(StoredFact_.At).Gte(int64(args.From))
+	qb.Where(StoredFact_.At).Lte(int64(args.To))
 
 	facts, err := ReadAllStoredFact(qb)
 	if err != nil {
@@ -274,8 +338,8 @@ func (m *Module) thirtyDay(ctx router.Context) {
 
 	qb := m.db.Query(&StoredFact{})
 	qb.Where(StoredFact_.TenantId).Eq(args.TenantId)
-	qb.Where(StoredFact_.DueAt).Gte(args.From)
-	qb.Where(StoredFact_.DueAt).Lte(args.To)
+	qb.Where(StoredFact_.DueAt).Gte(int64(args.From))
+	qb.Where(StoredFact_.DueAt).Lte(int64(args.To))
 
 	if args.Scope != "" {
 		qb.Where(StoredFact_.Scope).Eq(args.Scope)

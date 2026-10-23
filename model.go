@@ -31,7 +31,7 @@ var ShiftModel = model.Definition{
 var StoredFactModel = model.Definition{
 	Name: "stored_fact",
 	Fields: model.Fields{
-		{Name: "id", Type: model.Text(), DB: &model.FieldDB{PK: true}, Permitted: model.Permitted{Letters: true, Numbers: true, Extra: []rune{'|'}}},
+		{Name: "id", Type: model.Text(), DB: &model.FieldDB{PK: true}, Permitted: model.Permitted{Letters: true, Numbers: true, Extra: []rune{'|', '_', '-', '.'}}},
 		{Name: "tenant_id", Type: model.Text(), NotNull: true},
 		{Name: "kind", Type: model.Text(), NotNull: true},
 		{Name: "side", Type: model.Int(), NotNull: true},
@@ -43,6 +43,8 @@ var StoredFactModel = model.Definition{
 		{Name: "party", Type: model.Text(), OmitEmpty: true},
 		{Name: "at", Type: model.UnixTime(), NotNull: true},
 		{Name: "due_at", Type: model.UnixTime(), OmitEmpty: true},
+		{Name: "means", Type: model.Text(), OmitEmpty: true}, // CASH, CARD o TRANSFER
+		{Name: "actor", Type: model.Text(), OmitEmpty: true}, // quién lo registró
 	},
 }
 
