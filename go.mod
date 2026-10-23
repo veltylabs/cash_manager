@@ -20,5 +20,5 @@ require (
 	webtyp.com/calendar v0.1.0 // indirect
 	webtyp.com/escape v0.1.0 // indirect
 	webtyp.com/json v0.5.29 // indirect
-	webtyp.com/lang v0.1.7 // indirect
+	webtyp.com/lang v0.1.9 // indirect
 )
