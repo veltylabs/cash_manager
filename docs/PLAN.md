@@ -3,6 +3,8 @@ PLAN: "feat: export ui.Screens, NewView over the shared records, row declared on
 TAG: v0.2.7
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 1585145813774300075
 ---
 
 <!-- Dispatch only after webtyp.com/model v0.2.7 and webtyp.com/view v0.6.47 are published. Rewritten 2026-10-27: no Item(), no hand-written lister. -->
