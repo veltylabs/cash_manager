@@ -124,8 +124,8 @@ type StoredFact struct {
 	TenantId string
 	Kind string
 	Side int64
-	Amount int64
 	Currency string
+	Amount int64
 	Scope string
 	SourceType string
 	SourceId string
@@ -140,7 +140,7 @@ func (m *StoredFact) ModelName() string { return "stored_fact" }
 
 func (m *StoredFact) Schema() []model.Field { return StoredFactModel.Fields }
 
-func (m *StoredFact) Pointers() []any { return []any{&m.Id, &m.TenantId, &m.Kind, &m.Side, &m.Amount, &m.Currency, &m.Scope, &m.SourceType, &m.SourceId, &m.Party, (*int64)(&m.At), (*int64)(&m.DueAt), &m.Means, &m.Actor} }
+func (m *StoredFact) Pointers() []any { return []any{&m.Id, &m.TenantId, &m.Kind, &m.Side, &m.Currency, &m.Amount, &m.Scope, &m.SourceType, &m.SourceId, &m.Party, (*int64)(&m.At), (*int64)(&m.DueAt), &m.Means, &m.Actor} }
 
 func (m *StoredFact) IsNil() bool { return m == nil }
 
@@ -149,8 +149,8 @@ func (m *StoredFact) EncodeFields(w model.FieldWriter) {
 	w.String("tenant_id", m.TenantId)
 	w.String("kind", m.Kind)
 	w.Int("side", m.Side)
-	w.Int("amount", m.Amount)
 	w.String("currency", m.Currency)
+	w.Int("amount", m.Amount)
 	w.String("scope", m.Scope)
 	w.String("source_type", m.SourceType)
 	w.String("source_id", m.SourceId)
@@ -166,8 +166,8 @@ func (m *StoredFact) DecodeFields(r model.FieldReader) {
 	if v, ok := r.String("tenant_id"); ok { m.TenantId = v }
 	if v, ok := r.String("kind"); ok { m.Kind = v }
 	if v, ok := r.Int("side"); ok { m.Side = v }
-	if v, ok := r.Int("amount"); ok { m.Amount = v }
 	if v, ok := r.String("currency"); ok { m.Currency = v }
+	if v, ok := r.Int("amount"); ok { m.Amount = v }
 	if v, ok := r.String("scope"); ok { m.Scope = v }
 	if v, ok := r.String("source_type"); ok { m.SourceType = v }
 	if v, ok := r.String("source_id"); ok { m.SourceId = v }
@@ -196,8 +196,8 @@ var StoredFact_ = struct {
 	TenantId string
 	Kind string
 	Side string
-	Amount string
 	Currency string
+	Amount string
 	Scope string
 	SourceType string
 	SourceId string
@@ -211,8 +211,8 @@ var StoredFact_ = struct {
 	TenantId: "tenant_id",
 	Kind: "kind",
 	Side: "side",
-	Amount: "amount",
 	Currency: "currency",
+	Amount: "amount",
 	Scope: "scope",
 	SourceType: "source_type",
 	SourceId: "source_id",

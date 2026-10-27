@@ -5,6 +5,8 @@ import (
 	"webtyp.com/time"
 )
 
+const ResourceCashManager = "cashmanager"
+
 const (
 	ShiftOpen   = "open"
 	ShiftClosed = "closed"
@@ -18,8 +20,8 @@ var ShiftModel = model.Definition{
 		{Name: "cashier_id", Type: model.Text(), NotNull: true},
 		{Name: "status", Type: model.Text(), NotNull: true},
 		{Name: "opening_cash", Type: model.Int(), NotNull: true},
-		{Name: "closing_cash_counted", Type: model.Int()},
-		{Name: "closing_cash_expected", Type: model.Int()},
+		{Name: "closing_cash_counted", Type: model.Int(), Label: "Counted cash"},
+		{Name: "closing_cash_expected", Type: model.Int(), Label: "Expected cash"},
 		{Name: "difference", Type: model.Int()},
 		{Name: "currency", Type: model.Text(), NotNull: true, Permitted: model.Permitted{Letters: true, Minimum: 3, Maximum: 3}},
 		{Name: "opened_at", Type: model.UnixTime(), NotNull: true},
@@ -33,13 +35,13 @@ var StoredFactModel = model.Definition{
 	Fields: model.Fields{
 		{Name: "id", Type: model.Text(), DB: &model.FieldDB{PK: true}, Permitted: model.Permitted{Letters: true, Numbers: true, Extra: []rune{'|', '_', '-', '.'}}},
 		{Name: "tenant_id", Type: model.Text(), NotNull: true},
-		{Name: "kind", Type: model.Text(), NotNull: true},
+		{Name: "kind", Type: model.Text(), NotNull: true, Row: model.RowTitle},
 		{Name: "side", Type: model.Int(), NotNull: true},
-		{Name: "amount", Type: model.Int(), NotNull: true},
-		{Name: "currency", Type: model.Text(), NotNull: true, Permitted: model.Permitted{Letters: true, Minimum: 3, Maximum: 3}},
-		{Name: "scope", Type: model.Text(), NotNull: true},
-		{Name: "source_type", Type: model.Text(), NotNull: true},
-		{Name: "source_id", Type: model.Text(), NotNull: true},
+		{Name: "currency", Type: model.Text(), NotNull: true, Permitted: model.Permitted{Letters: true, Minimum: 3, Maximum: 3}, Row: model.RowDetail},
+		{Name: "amount", Type: model.Int(), NotNull: true, Row: model.RowDetail},
+		{Name: "scope", Type: model.Text(), NotNull: true, Row: model.RowDetail},
+		{Name: "source_type", Type: model.Text(), NotNull: true, Row: model.RowDetail},
+		{Name: "source_id", Type: model.Text(), NotNull: true, Row: model.RowDetail},
 		{Name: "party", Type: model.Text(), OmitEmpty: true},
 		{Name: "at", Type: model.UnixTime(), NotNull: true},
 		{Name: "due_at", Type: model.UnixTime(), OmitEmpty: true},

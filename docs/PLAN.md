@@ -3,8 +3,10 @@ PLAN: "feat: export ui.Screens, NewView over the shared records, row declared on
 TAG: v0.2.7
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 1585145813774300075
+PR: https://github.com/veltylabs/cash_manager/pull/5
+REVIEWED_COMMIT: 1bfcc16f024be3c9ab197dccf5348b5f29287d8f
 ---
 
 <!-- Dispatch only after webtyp.com/model v0.2.7 and webtyp.com/view v0.6.47 are published. Rewritten 2026-10-27: no Item(), no hand-written lister. -->
@@ -228,3 +230,6 @@ Commit after every stage. When all checks pass, push and open the PR.
 | 2 | View presenter and list defaults | `view.go`, `ops.go` |
 | 3 | Declarative screens | `ui/browser.go` |
 | 4 | Test and translations | `tests/ui_view_browser_test.go`, `lang.json` |
+
+## Executor notes
+- In Stage 2, updated `TenantId` defaulting logic to use `m.deps.TenantID` instead of `m.tenantID` because the `Module` struct has `deps Deps` which has `TenantID`, but does not directly have a `tenantID` field.
