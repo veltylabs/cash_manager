@@ -3,6 +3,8 @@ PLAN: "feat: export ui.Screens, introduce NewView and resolve langc reuse warnin
 TAG: v0.2.7
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 2572021172994679483
 ---
 
 > Read AGENTS.md at the repo root before any change.
