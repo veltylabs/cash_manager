@@ -228,3 +228,6 @@ Commit after every stage. When all checks pass, push and open the PR.
 | 2 | View presenter and list defaults | `view.go`, `ops.go` |
 | 3 | Declarative screens | `ui/browser.go` |
 | 4 | Test and translations | `tests/ui_view_browser_test.go`, `lang.json` |
+
+## Executor notes
+- In Stage 2, updated `TenantId` defaulting logic to use `m.deps.TenantID` instead of `m.tenantID` because the `Module` struct has `deps Deps` which has `TenantID`, but does not directly have a `tenantID` field.

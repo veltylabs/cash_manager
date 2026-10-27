@@ -287,14 +287,23 @@ func (m *Module) listStoredFacts(ctx router.Context) {
 		return
 	}
 
-	if args.TenantId == "" || args.Scope == "" || args.From == 0 || args.To == 0 {
-		ctx.WriteStatus(400); ctx.Write([]byte("bad request"))
-		return
+	if args.TenantId == "" {
+		args.TenantId = m.deps.TenantID // the installation's tenant, as device_manager does (ops.go tenantOr); if Module has no tenantID field, stop and say so in the PR
+	}
+
+	now := time.NowUnix()
+	if args.To == 0 {
+		args.To = now
+	}
+	if args.From == 0 {
+		args.From = now - 30*time.Day
 	}
 
 	qb := m.db.Query(&StoredFact{})
 	qb.Where(StoredFact_.TenantId).Eq(args.TenantId)
-	qb.Where(StoredFact_.Scope).Eq(args.Scope)
+	if args.Scope != "" {
+		qb.Where(StoredFact_.Scope).Eq(args.Scope)
+	}
 	qb.Where(StoredFact_.At).Gte(int64(args.From))
 	qb.Where(StoredFact_.At).Lte(int64(args.To))
 
