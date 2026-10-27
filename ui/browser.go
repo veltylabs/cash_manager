@@ -3,8 +3,8 @@
 package ui
 
 import (
-
-	"webtyp.com/model"
+	cashmanager "github.com/veltylabs/cash_manager"
+	"webtyp.com/lang"
 	"webtyp.com/router"
 	"webtyp.com/view"
 )
@@ -12,7 +12,17 @@ import (
 const ID = "cash_manager"
 const Label = "Caja"
 
-func Browser(caller router.Caller, ids model.IDGenerator, tenantID string) (view.Presenter, error) {
-	// 3 screens logic, as per guidelines for view.Presenter. Stub for compilation
-	return nil, nil
+const descCash lang.Text = "Cash shift management, cash register opening and closing, and financial fact audits."
+
+// Screens declara las pantallas que este módulo ofrece al menú de la app.
+func Screens(caller router.Caller) []view.Screen {
+	return []view.Screen{
+		{
+			ID:         ID,
+			Label:      Label,
+			Icon:       ID,
+			Permission: cashmanager.ResourceCashManager,
+			Presenter:  cashmanager.NewView(caller, view.WithDescription(descCash)),
+		},
+	}
 }

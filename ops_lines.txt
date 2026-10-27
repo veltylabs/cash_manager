@@ -1,0 +1,370 @@
+1: package cashmanager
+2:
+3: import (
+4: 	"webtyp.com/model"
+5: 	"webtyp.com/money"
+6: 	"webtyp.com/router"
+7: 	"webtyp.com/time"
+8:
+9: 	"webtyp.com/orm"
+10:
+11: )
+12:
+13: type TodayResponse struct {
+14: 	Shift *Shift
+15: 	Facts StoredFactList
+16: }
+17:
+18: func (r *TodayResponse) Schema() []model.Field { return nil }
+19: func (r *TodayResponse) Pointers() []any { return nil }
+20: func (r *TodayResponse) EncodeFields(w model.FieldWriter) {
+21: 	if r.Shift != nil {
+22: 		w.Object("shift", r.Shift)
+23: 	}
+24: 	arr := w.Array("facts", len(r.Facts))
+25: 	for _, f := range r.Facts {
+26: 		arr.Object(f)
+27: 	}
+28: 	arr.Close()
+29: }
+30: func (r *TodayResponse) DecodeFields(r2 model.FieldReader) {
+31: 	shift := &Shift{}
+32: 	if r2.Object("shift", shift) {
+33: 		r.Shift = shift
+34: 	}
+35: 	if ar, ok := r2.Array("facts"); ok {
+36: 		r.Facts = make(StoredFactList, ar.Len())
+37: 		for i := 0; i < ar.Len(); i++ {
+38: 			f := &StoredFact{}
+39: 			ar.Object(i, f)
+40: 			r.Facts[i] = f
+41: 		}
+42: 	}
+43: }
+44: func (r *TodayResponse) IsNil() bool { return r == nil }
+45:
+46: type ReorderResponse struct {
+47: 	Items []LowStockItem
+48: }
+49:
+50: func (r *ReorderResponse) Schema() []model.Field { return nil }
+51: func (r *ReorderResponse) Pointers() []any { return nil }
+52: func (r *ReorderResponse) EncodeFields(w model.FieldWriter) {
+53: 	arr := w.Array("items", len(r.Items))
+54: 	for i := range r.Items {
+55: 		arr.Object(&r.Items[i])
+56: 	}
+57: 	arr.Close()
+58: }
+59: func (r *ReorderResponse) DecodeFields(r2 model.FieldReader) {
+60: 	if ar, ok := r2.Array("items"); ok {
+61: 		r.Items = make([]LowStockItem, ar.Len())
+62: 		for i := 0; i < ar.Len(); i++ {
+63: 			ar.Object(i, &r.Items[i])
+64: 		}
+65: 	}
+66: }
+67: func (r *ReorderResponse) IsNil() bool { return r == nil }
+68:
+69: type ThirtyDayResponse struct {
+70: 	Facts    StoredFactList
+71: 	Forecast []ForecastLine
+72: }
+73:
+74: func (r *ThirtyDayResponse) Schema() []model.Field { return nil }
+75: func (r *ThirtyDayResponse) Pointers() []any { return nil }
+76: func (r *ThirtyDayResponse) EncodeFields(w model.FieldWriter) {
+77: 	arr := w.Array("facts", len(r.Facts))
+78: 	for _, f := range r.Facts {
+79: 		arr.Object(f)
+80: 	}
+81: 	arr.Close()
+82:
+83: 	arrF := w.Array("forecast", len(r.Forecast))
+84: 	for i := range r.Forecast {
+85: 		arrF.Object(&r.Forecast[i])
+86: 	}
+87: 	arrF.Close()
+88: }
+89: func (r *ThirtyDayResponse) DecodeFields(r2 model.FieldReader) {
+90: 	if ar, ok := r2.Array("facts"); ok {
+91: 		r.Facts = make(StoredFactList, ar.Len())
+92: 		for i := 0; i < ar.Len(); i++ {
+93: 			f := &StoredFact{}
+94: 			ar.Object(i, f)
+95: 			r.Facts[i] = f
+96: 		}
+97: 	}
+98: 	if ar, ok := r2.Array("forecast"); ok {
+99: 		r.Forecast = make([]ForecastLine, ar.Len())
+100: 		for i := 0; i < ar.Len(); i++ {
+101: 			ar.Object(i, &r.Forecast[i])
+102: 		}
+103: 	}
+104: }
+105: func (r *ThirtyDayResponse) IsNil() bool { return r == nil }
+106:
+107: func (m *Module) openShift(ctx router.Context) {
+108: 	var args OpenShiftArgs
+109: 	if err := ctx.Decode(&args); err != nil {
+110: 		ctx.WriteStatus(400); ctx.Write([]byte("bad request"))
+111: 		return
+112: 	}
+113:
+114: 	if args.TenantId == "" || args.CashierId == "" || args.Currency == "" {
+115: 		ctx.WriteStatus(400); ctx.Write([]byte("bad request"))
+116: 		return
+117: 	}
+118:
+119: 	qb := m.db.Query(&Shift{})
+120: 	qb.Where(Shift_.TenantId).Eq(args.TenantId)
+121: 	qb.Where(Shift_.CashierId).Eq(args.CashierId)
+122: 	qb.Where(Shift_.Status).Eq(ShiftOpen)
+123:
+124: 	existing, err := ReadAllShift(qb)
+125: 	if err != nil {
+126: 		ctx.WriteStatus(500); ctx.Write([]byte("internal error"))
+127: 		return
+128: 	}
+129: 	if len(existing) > 0 {
+130: 		ctx.WriteStatus(409); ctx.Write([]byte("conflict"))
+131: 		return
+132: 	}
+133:
+134: 	now := time.NowUnix()
+135:
+136: 	shift := &Shift{
+137: 		Id:          m.deps.IDs.NewID(),
+138: 		TenantId:    args.TenantId,
+139: 		CashierId:   args.CashierId,
+140: 		Status:      ShiftOpen,
+141: 		OpeningCash: args.OpeningCash,
+142: 		Currency:    args.Currency,
+143: 		OpenedAt:    now,
+144: 		UpdatedAt:   time.NowNano(),
+145: 	}
+146:
+147: 	if err := shift.Validate(model.ActionCreate); err != nil {
+148: 		ctx.WriteStatus(400); ctx.Write([]byte("bad request"))
+149: 		return
+150: 	}
+151:
+152: 	if err := m.db.Create(shift); err != nil {
+153: 		ctx.WriteStatus(500); ctx.Write([]byte("internal error"))
+154: 		return
+155: 	}
+156:
+157: 	_ = ctx.Encode(shift)
+158: }
+159:
+160: func (m *Module) closeShift(ctx router.Context) {
+161: 	var args CloseShiftArgs
+162: 	if err := ctx.Decode(&args); err != nil {
+163: 		ctx.WriteStatus(400); ctx.Write([]byte("bad request"))
+164: 		return
+165: 	}
+166:
+167: 	if args.TenantId == "" || args.Id == "" {
+168: 		ctx.WriteStatus(400); ctx.Write([]byte("bad request"))
+169: 		return
+170: 	}
+171:
+172: 	shift := &Shift{}
+173: 	qb := m.db.Query(shift)
+174: 	qb.Where(Shift_.TenantId).Eq(args.TenantId)
+175: 	qb.Where(Shift_.Id).Eq(args.Id)
+176:
+177: 	_, err := ReadOneShift(qb, shift)
+178: 	if err != nil {
+179: 		if orm.IsNotFound(err) {
+180: 			ctx.WriteStatus(404); ctx.Write([]byte("not found"))
+181: 			return
+182: 		}
+183: 		ctx.WriteStatus(500); ctx.Write([]byte("internal error"))
+184: 		return
+185: 	}
+186:
+187: 	if shift.Status == ShiftClosed {
+188: 		ctx.WriteStatus(409); ctx.Write([]byte("conflict"))
+189: 		return
+190: 	}
+191:
+192: 	now := time.NowUnix()
+193:
+194: 	factQb := m.db.Query(&StoredFact{})
+195: 	factQb.Where(StoredFact_.TenantId).Eq(args.TenantId)
+196: 	factQb.Where(StoredFact_.At).Gte(int64(shift.OpenedAt))
+197: 	factQb.Where(StoredFact_.At).Lte(int64(now))
+198:
+199: 	facts, err := ReadAllStoredFact(factQb)
+200: 	if err != nil {
+201: 		ctx.WriteStatus(500); ctx.Write([]byte("internal error"))
+202: 		return
+203: 	}
+204:
+205: 	expected := shift.OpeningCash
+206: 	for _, f := range facts {
+207: 		if f.Currency != shift.Currency || f.Means != string(money.MeansCash) || f.Actor != shift.CashierId {
+208: 			continue // otra moneda, tarjeta o transferencia, u otra cajera: no es efectivo de este turno
+209: 		}
+210: 		switch f.Kind {
+211: 		case string(money.Charged):
+212: 			expected += f.Amount
+213: 		case string(money.Refunded):
+214: 			expected -= f.Amount
+215: 		}
+216: 	}
+217:
+218: 	shift.Status = ShiftClosed
+219: 	shift.ClosingCashCounted = args.ClosingCashCounted
+220: 	shift.ClosingCashExpected = expected
+221: 	shift.Difference = args.ClosingCashCounted - expected
+222: 	shift.ClosedAt = now
+223: 	shift.UpdatedAt = time.NowNano()
+224:
+225: 	// We validate only the updated fields via UpdateFields, so skip Validate entirely. UpdateFields will validate the specific fields.
+226:
+227: 	if err := m.db.UpdateFields(shift, []string{Shift_.Status, Shift_.ClosingCashCounted, Shift_.ClosingCashExpected, Shift_.Difference, Shift_.ClosedAt, Shift_.UpdatedAt}, orm.Eq(Shift_.Id, args.Id), orm.Eq(Shift_.TenantId, args.TenantId)); err != nil {
+228: 		ctx.WriteStatus(500); ctx.Write([]byte("internal error"))
+229: 		return
+230: 	}
+231:
+232: 	_ = ctx.Encode(shift)
+233: }
+234:
+235: func (m *Module) getToday(ctx router.Context) {
+236: 	var args GetTodayArgs
+237: 	if err := ctx.Decode(&args); err != nil {
+238: 		ctx.WriteStatus(400); ctx.Write([]byte("bad request"))
+239: 		return
+240: 	}
+241:
+242: 	if args.TenantId == "" || args.CashierId == "" {
+243: 		ctx.WriteStatus(400); ctx.Write([]byte("bad request"))
+244: 		return
+245: 	}
+246:
+247: 	qb := m.db.Query(&Shift{})
+248: 	qb.Where(Shift_.TenantId).Eq(args.TenantId)
+249: 	qb.Where(Shift_.CashierId).Eq(args.CashierId)
+250: 	qb.Where(Shift_.Status).Eq(ShiftOpen)
+251:
+252: 	shifts, err := ReadAllShift(qb)
+253: 	if err != nil {
+254: 		ctx.WriteStatus(500); ctx.Write([]byte("internal error"))
+255: 		return
+256: 	}
+257:
+258: 	if len(shifts) == 0 {
+259: 		_ = ctx.Encode(&TodayResponse{})
+260: 		return
+261: 	}
+262:
+263: 	shift := shifts[0]
+264:
+265: 	now := time.NowUnix()
+266: 	factQb := m.db.Query(&StoredFact{})
+267: 	factQb.Where(StoredFact_.TenantId).Eq(args.TenantId)
+268: 	factQb.Where(StoredFact_.At).Gte(int64(shift.OpenedAt))
+269: 	factQb.Where(StoredFact_.At).Lte(int64(now))
+270:
+271: 	facts, err := ReadAllStoredFact(factQb)
+272: 	if err != nil {
+273: 		ctx.WriteStatus(500); ctx.Write([]byte("internal error"))
+274: 		return
+275: 	}
+276:
+277: 	_ = ctx.Encode(&TodayResponse{
+278: 		Shift: shift,
+279: 		Facts: facts,
+280: 	})
+281: }
+282:
+283: func (m *Module) listStoredFacts(ctx router.Context) {
+284: 	var args ListStoredFactsArgs
+285: 	if err := ctx.Decode(&args); err != nil {
+286: 		ctx.WriteStatus(400); ctx.Write([]byte("bad request"))
+287: 		return
+288: 	}
+289:
+290: 	if args.TenantId == "" || args.Scope == "" || args.From == 0 || args.To == 0 {
+291: 		ctx.WriteStatus(400); ctx.Write([]byte("bad request"))
+292: 		return
+293: 	}
+294:
+295: 	qb := m.db.Query(&StoredFact{})
+296: 	qb.Where(StoredFact_.TenantId).Eq(args.TenantId)
+297: 	qb.Where(StoredFact_.Scope).Eq(args.Scope)
+298: 	qb.Where(StoredFact_.At).Gte(int64(args.From))
+299: 	qb.Where(StoredFact_.At).Lte(int64(args.To))
+300:
+301: 	facts, err := ReadAllStoredFact(qb)
+302: 	if err != nil {
+303: 		ctx.WriteStatus(500); ctx.Write([]byte("internal error"))
+304: 		return
+305: 	}
+306:
+307: 	_ = ctx.Encode(&facts)
+308: }
+309:
+310: func (m *Module) reorder(ctx router.Context) {
+311: 	var items []LowStockItem
+312: 	if m.deps.LowStock != nil {
+313: 		var err error
+314: 		items, err = m.deps.LowStock.LowStock(m.deps.TenantID)
+315: 		if err != nil {
+316: 			ctx.WriteStatus(500); ctx.Write([]byte("internal error"))
+317: 			return
+318: 		}
+319: 	}
+320: 	if items == nil {
+321: 		items = []LowStockItem{} // Ensure it's never nil
+322: 	}
+323:
+324: 	_ = ctx.Encode(&ReorderResponse{Items: items})
+325: }
+326:
+327: func (m *Module) thirtyDay(ctx router.Context) {
+328: 	var args ListStoredFactsArgs
+329: 	if err := ctx.Decode(&args); err != nil {
+330: 		ctx.WriteStatus(400); ctx.Write([]byte("bad request"))
+331: 		return
+332: 	}
+333:
+334: 	if args.TenantId == "" || args.From == 0 || args.To == 0 {
+335: 		ctx.WriteStatus(400); ctx.Write([]byte("bad request"))
+336: 		return
+337: 	}
+338:
+339: 	qb := m.db.Query(&StoredFact{})
+340: 	qb.Where(StoredFact_.TenantId).Eq(args.TenantId)
+341: 	qb.Where(StoredFact_.DueAt).Gte(int64(args.From))
+342: 	qb.Where(StoredFact_.DueAt).Lte(int64(args.To))
+343:
+344: 	if args.Scope != "" {
+345: 		qb.Where(StoredFact_.Scope).Eq(args.Scope)
+346: 	}
+347:
+348: 	facts, err := ReadAllStoredFact(qb)
+349: 	if err != nil {
+350: 		ctx.WriteStatus(500); ctx.Write([]byte("internal error"))
+351: 		return
+352: 	}
+353:
+354: 	var forecast []ForecastLine
+355: 	if m.deps.Forecast != nil {
+356: 		forecast, err = m.deps.Forecast.PendingAccruals(args.TenantId, args.From, args.To)
+357: 		if err != nil {
+358: 			ctx.WriteStatus(500); ctx.Write([]byte("internal error"))
+359: 			return
+360: 		}
+361: 	}
+362: 	if forecast == nil {
+363: 		forecast = []ForecastLine{}
+364: 	}
+365:
+366: 	_ = ctx.Encode(&ThirtyDayResponse{
+367: 		Facts:    facts,
+368: 		Forecast: forecast,
+369: 	})
+370: }

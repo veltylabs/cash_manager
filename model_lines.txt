@@ -1,0 +1,94 @@
+1: package cashmanager
+2:
+3: import (
+4: 	"webtyp.com/model"
+5: 	"webtyp.com/time"
+6: )
+7:
+8: const (
+9: 	ShiftOpen   = "open"
+10: 	ShiftClosed = "closed"
+11: )
+12:
+13: var ShiftModel = model.Definition{
+14: 	Name: "cash_shift",
+15: 	Fields: model.Fields{
+16: 		{Name: "id", Type: model.Text(), DB: &model.FieldDB{PK: true}, OmitEmpty: true},
+17: 		{Name: "tenant_id", Type: model.Text(), NotNull: true},
+18: 		{Name: "cashier_id", Type: model.Text(), NotNull: true},
+19: 		{Name: "status", Type: model.Text(), NotNull: true},
+20: 		{Name: "opening_cash", Type: model.Int(), NotNull: true},
+21: 		{Name: "closing_cash_counted", Type: model.Int()},
+22: 		{Name: "closing_cash_expected", Type: model.Int()},
+23: 		{Name: "difference", Type: model.Int()},
+24: 		{Name: "currency", Type: model.Text(), NotNull: true, Permitted: model.Permitted{Letters: true, Minimum: 3, Maximum: 3}},
+25: 		{Name: "opened_at", Type: model.UnixTime(), NotNull: true},
+26: 		{Name: "closed_at", Type: model.UnixTime(), OmitEmpty: true},
+27: 		{Name: "updated_at", Type: model.NanoTime(), OmitEmpty: true},
+28: 	},
+29: }
+30:
+31: var StoredFactModel = model.Definition{
+32: 	Name: "stored_fact",
+33: 	Fields: model.Fields{
+34: 		{Name: "id", Type: model.Text(), DB: &model.FieldDB{PK: true}, Permitted: model.Permitted{Letters: true, Numbers: true, Extra: []rune{'|', '_', '-', '.'}}},
+35: 		{Name: "tenant_id", Type: model.Text(), NotNull: true},
+36: 		{Name: "kind", Type: model.Text(), NotNull: true},
+37: 		{Name: "side", Type: model.Int(), NotNull: true},
+38: 		{Name: "amount", Type: model.Int(), NotNull: true},
+39: 		{Name: "currency", Type: model.Text(), NotNull: true, Permitted: model.Permitted{Letters: true, Minimum: 3, Maximum: 3}},
+40: 		{Name: "scope", Type: model.Text(), NotNull: true},
+41: 		{Name: "source_type", Type: model.Text(), NotNull: true},
+42: 		{Name: "source_id", Type: model.Text(), NotNull: true},
+43: 		{Name: "party", Type: model.Text(), OmitEmpty: true},
+44: 		{Name: "at", Type: model.UnixTime(), NotNull: true},
+45: 		{Name: "due_at", Type: model.UnixTime(), OmitEmpty: true},
+46: 		{Name: "means", Type: model.Text(), OmitEmpty: true}, // CASH, CARD o TRANSFER
+47: 		{Name: "actor", Type: model.Text(), OmitEmpty: true}, // quién lo registró
+48: 	},
+49: }
+50:
+51: type OpenShiftArgs struct {
+52: 	TenantId    string `json:"tenant_id"`
+53: 	CashierId   string `json:"cashier_id"`
+54: 	OpeningCash int64  `json:"opening_cash"`
+55: 	Currency    string `json:"currency"`
+56: }
+57: func (a *OpenShiftArgs) Schema() []model.Field { return nil }
+58: func (a *OpenShiftArgs) Pointers() []any { return []any{&a.TenantId, &a.CashierId, &a.OpeningCash, &a.Currency} }
+59: func (a *OpenShiftArgs) EncodeFields(w model.FieldWriter) { w.String("tenant_id", a.TenantId); w.String("cashier_id", a.CashierId); w.Int("opening_cash", a.OpeningCash); w.String("currency", a.Currency) }
+60: func (a *OpenShiftArgs) DecodeFields(r model.FieldReader) { a.TenantId, _ = r.String("tenant_id"); a.CashierId, _ = r.String("cashier_id"); a.OpeningCash, _ = r.Int("opening_cash"); a.Currency, _ = r.String("currency") }
+61: func (a *OpenShiftArgs) IsNil() bool { return a == nil }
+62:
+63: type CloseShiftArgs struct {
+64: 	TenantId           string `json:"tenant_id"`
+65: 	Id                 string `json:"id"`
+66: 	ClosingCashCounted int64  `json:"closing_cash_counted"`
+67: }
+68: func (a *CloseShiftArgs) Schema() []model.Field { return nil }
+69: func (a *CloseShiftArgs) Pointers() []any { return []any{&a.TenantId, &a.Id, &a.ClosingCashCounted} }
+70: func (a *CloseShiftArgs) EncodeFields(w model.FieldWriter) { w.String("tenant_id", a.TenantId); w.String("id", a.Id); w.Int("closing_cash_counted", a.ClosingCashCounted) }
+71: func (a *CloseShiftArgs) DecodeFields(r model.FieldReader) { a.TenantId, _ = r.String("tenant_id"); a.Id, _ = r.String("id"); a.ClosingCashCounted, _ = r.Int("closing_cash_counted") }
+72: func (a *CloseShiftArgs) IsNil() bool { return a == nil }
+73:
+74: type GetTodayArgs struct {
+75: 	TenantId  string `json:"tenant_id"`
+76: 	CashierId string `json:"cashier_id"`
+77: }
+78: func (a *GetTodayArgs) Schema() []model.Field { return nil }
+79: func (a *GetTodayArgs) Pointers() []any { return []any{&a.TenantId, &a.CashierId} }
+80: func (a *GetTodayArgs) EncodeFields(w model.FieldWriter) { w.String("tenant_id", a.TenantId); w.String("cashier_id", a.CashierId) }
+81: func (a *GetTodayArgs) DecodeFields(r model.FieldReader) { a.TenantId, _ = r.String("tenant_id"); a.CashierId, _ = r.String("cashier_id") }
+82: func (a *GetTodayArgs) IsNil() bool { return a == nil }
+83:
+84: type ListStoredFactsArgs struct {
+85: 	TenantId string    `json:"tenant_id"`
+86: 	Scope    string    `json:"scope"`
+87: 	From     time.Unix `json:"from"`
+88: 	To       time.Unix `json:"to"`
+89: }
+90: func (a *ListStoredFactsArgs) Schema() []model.Field { return nil }
+91: func (a *ListStoredFactsArgs) Pointers() []any { return []any{&a.TenantId, &a.Scope, &a.From, &a.To} }
+92: func (a *ListStoredFactsArgs) EncodeFields(w model.FieldWriter) { w.String("tenant_id", a.TenantId); w.String("scope", a.Scope); w.Int("from", int64(a.From)); w.Int("to", int64(a.To)) }
+93: func (a *ListStoredFactsArgs) DecodeFields(r model.FieldReader) { a.TenantId, _ = r.String("tenant_id"); a.Scope, _ = r.String("scope"); f, _ := r.Int("from"); a.From = time.Unix(f); t, _ := r.Int("to"); a.To = time.Unix(t) }
+94: func (a *ListStoredFactsArgs) IsNil() bool { return a == nil }

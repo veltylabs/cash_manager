@@ -5,6 +5,8 @@ import (
 	"webtyp.com/time"
 )
 
+const ResourceCashManager = "cashmanager"
+
 const (
 	ShiftOpen   = "open"
 	ShiftClosed = "closed"
@@ -18,8 +20,8 @@ var ShiftModel = model.Definition{
 		{Name: "cashier_id", Type: model.Text(), NotNull: true},
 		{Name: "status", Type: model.Text(), NotNull: true},
 		{Name: "opening_cash", Type: model.Int(), NotNull: true},
-		{Name: "closing_cash_counted", Type: model.Int()},
-		{Name: "closing_cash_expected", Type: model.Int()},
+		{Name: "closing_cash_counted", Type: model.Int(), Label: "Counted cash"},
+		{Name: "closing_cash_expected", Type: model.Int(), Label: "Expected cash"},
 		{Name: "difference", Type: model.Int()},
 		{Name: "currency", Type: model.Text(), NotNull: true, Permitted: model.Permitted{Letters: true, Minimum: 3, Maximum: 3}},
 		{Name: "opened_at", Type: model.UnixTime(), NotNull: true},

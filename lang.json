@@ -1,0 +1,27 @@
+{
+  "languages": ["es", "zh", "hi", "ar", "pt", "fr", "de", "ru"],
+  "keys": {
+    "Counted cash": ["Efectivo contado", "", "", "", "", "", "", ""],
+    "Expected cash": ["Efectivo esperado", "", "", "", "", "", "", ""],
+    "actor": ["actor", "", "", "", "", "", "", ""],
+    "amount": ["monto", "", "", "", "", "", "", ""],
+    "at": ["en", "", "", "", "", "", "", ""],
+    "cashier id": ["id de cajero", "", "", "", "", "", "", ""],
+    "closed at": ["cerrado en", "", "", "", "", "", "", ""],
+    "currency": ["moneda", "", "", "", "", "", "", ""],
+    "difference": ["diferencia", "", "", "", "", "", "", ""],
+    "due at": ["vence en", "", "", "", "", "", "", ""],
+    "kind": ["tipo", "", "", "", "", "", "", ""],
+    "means": ["medio", "", "", "", "", "", "", ""],
+    "opened at": ["abierto en", "", "", "", "", "", "", ""],
+    "opening cash": ["efectivo inicial", "", "", "", "", "", "", ""],
+    "party": ["parte", "", "", "", "", "", "", ""],
+    "scope": ["ámbito", "", "", "", "", "", "", ""],
+    "side": ["lado", "", "", "", "", "", "", ""],
+    "source id": ["id de origen", "", "", "", "", "", "", ""],
+    "source type": ["tipo de origen", "", "", "", "", "", "", ""],
+    "status": ["estado", "", "", "", "", "", "", ""],
+    "tenant id": ["id de inquilino", "", "", "", "", "", "", ""],
+    "updated at": ["actualizado en", "", "", "", "", "", "", ""]
+  }
+}

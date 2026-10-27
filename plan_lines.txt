@@ -1,0 +1,246 @@
+1: ---
+2: PLAN: "feat: export ui.Screens, introduce NewView and resolve langc reuse warnings"
+3: TAG: v0.2.7
+4: EXECUTOR: jules
+5: REVIEWER: none
+6: STATUS: running
+7: SESSION: 2572021172994679483
+8: ---
+9:
+10: > Read AGENTS.md at the repo root before any change.
+11:
+12: ## Tools
+13:
+14: ```
+15: go install webtyp.com/devflow/cmd/gotest@latest
+16: go install webtyp.com/lang/cmd/langc@latest
+17: go install webtyp.com/ormc/cmd/ormc@latest
+18: ```
+19:
+20: ## Why
+21:
+22: Phase M of webtyp app composition (`webtyp/docs/APP_COMPOSITION_MASTER_PLAN.md`): modules declare their screens via `Screens(caller router.Caller) []view.Screen` instead of legacy `Browser(...) (view.Presenter, error)`. Each leaf screen declares required `ID`, `Label`, `Icon`, `Permission`, and a non-nil `Presenter` with `view.WithDescription(...)`.
+23: Additionally, `langc sync .` detected a reuse warning on `closing_cash_counted` and `closing_cash_expected` sharing `closing cash`; distinct labels must be assigned in `model.go`, `view.Presenter` introduced via `view.go`, and Spanish translations completed in `lang.json`.
+24:
+25: ## APIs used
+26:
+27: | symbol | exact signature | tag | file |
+28: |---|---|---|---|
+29: | `view.Screen` | `type Screen struct { ID string; Label lang.Text; Icon string; Permission model.Resource; Presenter Presenter; Lookups []Lookup; Help lang.Text; Children []Screen }` | `webtyp.com/view@v0.6.45` | `view/screen.go` |
+30: | `view.WithDescription` | `func WithDescription(d lang.Text) Option` | `webtyp.com/view@v0.6.45` | `view/options.go` |
+31: | `view.WithTitle` | `func WithTitle(t string) Option` | `webtyp.com/view@v0.6.45` | `view/options.go` |
+32: | `view.New` | `func New(source Lister, target model.Model, opts ...Option) Presenter` | `webtyp.com/view@v0.6.45` | `view/view.go` |
+33: | `view.Item` | `type Item struct { ID, Label, Description, Sublabel, LeadTop, LeadMain, LeadBottom string }` | `webtyp.com/view@v0.6.45` | `view/item.go` |
+34: | `view.Itemizer` | `type Itemizer interface { Item() Item }` | `webtyp.com/view@v0.6.45` | `view/item.go` |
+35: | `router.Caller` | `type Caller interface { Call(op string, args, out any, done func(error)) }` | `webtyp.com/router@v0.4.6` | `router/caller.go` |
+36:
+37: If a signature in the published tag differs from this table, stop and name the symbol in the PR; never adapt it by guessing.
+38:
+39: ## Stage 1: Explicit labels in model.go and ormc generation
+40:
+41: In `model.go`:
+42: 1. Define constant `ResourceCashManager`:
+43: ```go
+44: const ResourceCashManager = "cashmanager"
+45: ```
+46: 2. In `ShiftModel`, add explicit distinct labels to avoid the two-word share warning:
+47: ```go
+48: 		{Name: "closing_cash_counted", Type: model.Int(), Label: "Counted cash"},
+49: 		{Name: "closing_cash_expected", Type: model.Int(), Label: "Expected cash"},
+50: ```
+51: 3. Run `ormc` to update `model_orm.go`.
+52:
+53: Files: `model.go`, `model_orm.go`
+54:
+55: ## Stage 2: View presenter and default list in ops.go
+56:
+57: 1. Create `view.go` at module root:
+58: ```go
+59: package cashmanager
+60:
+61: import (
+62: 	"webtyp.com/fmt"
+63: 	"webtyp.com/lang"
+64: 	"webtyp.com/model"
+65: 	"webtyp.com/router"
+66: 	"webtyp.com/view"
+67: )
+68:
+69: const (
+70: 	titleCashManager  = "Cash management"
+71: 	OpListStoredFacts = "ListStoredFacts"
+72: )
+73:
+74: // Item implementa view.Itemizer para StoredFact.
+75: func (f *StoredFact) Item() view.Item {
+76: 	return view.Item{
+77: 		ID:          f.Id,
+78: 		Label:       f.Kind + " · " + f.Currency + " " + fmt.Sprint(f.Amount),
+79: 		Description: f.Scope + " · " + f.SourceType + " " + f.SourceId,
+80: 	}
+81: }
+82:
+83: // NewView construye el Presenter de consulta de hechos de caja.
+84: func NewView(caller router.Caller, opts ...view.Option) view.Presenter {
+85: 	allOpts := append([]view.Option{view.WithTitle(titleCashManager)}, opts...)
+86: 	return view.New(&factLister{caller: caller}, &StoredFact{}, allOpts...)
+87: }
+88:
+89: type factLister struct {
+90: 	caller router.Caller
+91: }
+92:
+93: func (l *factLister) List(done func([]model.Model, error)) {
+94: 	out := &StoredFactList{}
+95: 	l.caller.Call(ModelName+"."+OpListStoredFacts, nil, out, func(err error) {
+96: 		if err != nil {
+97: 			done(nil, err)
+98: 			return
+99: 		}
+100: 		rows := make([]model.Model, len(*out))
+101: 		for i, f := range *out {
+102: 			rows[i] = f
+103: 		}
+104: 		done(rows, nil)
+105: 	})
+106: }
+107: ```
+108:
+109: 2. In `ops.go`, update `listStoredFacts` to support listing when `From`/`To` are zero (default to past 30 days) and when `Scope` is empty (query all facts for the tenant):
+110: ```go
+111: func (m *Module) listStoredFacts(ctx router.Context) {
+112: 	var args ListStoredFactsArgs
+113: 	if err := ctx.Decode(&args); err != nil {
+114: 		ctx.WriteStatus(400); ctx.Write([]byte("bad request"))
+115: 		return
+116: 	}
+117:
+118: 	if args.TenantId == "" {
+119: 		ctx.WriteStatus(400); ctx.Write([]byte("bad request"))
+120: 		return
+121: 	}
+122:
+123: 	now := time.NowUnix()
+124: 	if args.To == 0 {
+125: 		args.To = now
+126: 	}
+127: 	if args.From == 0 {
+128: 		args.From = now - 30*time.Day
+129: 	}
+130:
+131: 	qb := m.db.Query(&StoredFact{})
+132: 	qb.Where(StoredFact_.TenantId).Eq(args.TenantId)
+133: 	if args.Scope != "" {
+134: 		qb.Where(StoredFact_.Scope).Eq(args.Scope)
+135: 	}
+136: 	qb.Where(StoredFact_.At).Gte(int64(args.From))
+137: 	qb.Where(StoredFact_.At).Lte(int64(args.To))
+138:
+139: 	facts, err := ReadAllStoredFact(qb)
+140: 	if err != nil {
+141: 		ctx.WriteStatus(500); ctx.Write([]byte("internal error"))
+142: 		return
+143: 	}
+144:
+145: 	_ = ctx.Encode(&facts)
+146: }
+147: ```
+148:
+149: Files: `view.go`, `ops.go`
+150:
+151: ## Stage 3: Declarative Screens in ui/browser.go
+152:
+153: Replace `ui/browser.go` with:
+154: ```go
+155: //go:build browser
+156:
+157: package ui
+158:
+159: import (
+160: 	cashmanager "github.com/veltylabs/cash_manager"
+161: 	"webtyp.com/lang"
+162: 	"webtyp.com/router"
+163: 	"webtyp.com/view"
+164: )
+165:
+166: const ID = "cash_manager"
+167: const Label = "Caja"
+168:
+169: const descCash lang.Text = "Cash shift management, cash register opening and closing, and financial fact audits."
+170:
+171: // Screens declara las pantallas que este módulo ofrece al menú de la app.
+172: func Screens(caller router.Caller) []view.Screen {
+173: 	return []view.Screen{
+174: 		{
+175: 			ID:         ID,
+176: 			Label:      Label,
+177: 			Icon:       ID,
+178: 			Permission: cashmanager.ResourceCashManager,
+179: 			Presenter:  cashmanager.NewView(caller, view.WithDescription(descCash)),
+180: 		},
+181: 	}
+182: }
+183: ```
+184:
+185: Files: `ui/browser.go`
+186:
+187: ## Stage 4: Test and Translations
+188:
+189: 1. Add `tests/ui_view_browser_test.go`:
+190: ```go
+191: package tests
+192:
+193: import (
+194: 	"testing"
+195:
+196: 	"github.com/veltylabs/cash_manager/ui"
+197: 	"webtyp.com/router/mock"
+198: )
+199:
+200: func TestUIScreens(t *testing.T) {
+201: 	caller := mock.NewCaller()
+202: 	screens := ui.Screens(caller)
+203: 	if len(screens) == 0 {
+204: 		t.Fatal("expected at least 1 screen")
+205: 	}
+206: 	for _, s := range screens {
+207: 		if err := s.Validate(); err != nil {
+208: 			t.Fatalf("screen %s invalid: %v", s.ID, err)
+209: 		}
+210: 		if s.Presenter == nil {
+211: 			t.Fatalf("screen %s expected Presenter", s.ID)
+212: 		}
+213: 		if s.Presenter.Description() == "" {
+214: 			t.Fatalf("screen %s expected non-empty description", s.ID)
+215: 		}
+216: 	}
+217: }
+218: ```
+219:
+220: 2. Run `langc sync .`.
+221: 3. Complete 100% of Spanish translations `(es)` in `lang.json`.
+222: 4. Ensure `langc sync .` reports:
+223:    - 0 untranslated `(es)`
+224:    - 0 reuse warnings
+225:    - 0 identical values
+226:
+227: Files: `tests/ui_view_browser_test.go`, `lang.json`
+228:
+229: ## Delivery check
+230:
+231: Run:
+232: ```
+233: gotest
+234: langc sync .
+235: ```
+236: Both commands must exit 0 with 0 errors, 0 untranslated `(es)`, and 0 reuse warnings.
+237: Commit after every stage. When all checks pass, push and open the PR.
+238:
+239: ## Stages
+240:
+241: | # | Stage | Files |
+242: |---|---|---|
+243: | 1 | Model labels and ormc | `model.go`, `model_orm.go` |
+244: | 2 | View presenter and list defaults | `view.go`, `ops.go` |
+245: | 3 | Declarative screens | `ui/browser.go` |
+246: | 4 | Test and translations | `tests/ui_view_browser_test.go`, `lang.json` |
