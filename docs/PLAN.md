@@ -1,11 +1,11 @@
 ---
-PLAN: "feat: export ui.Screens, introduce NewView and resolve langc reuse warnings"
+PLAN: "feat: export ui.Screens, NewView over the shared records, row declared on the fields; langc reuse warnings"
 TAG: v0.2.7
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
-SESSION: 2572021172994679483
 ---
+
+<!-- Dispatch only after webtyp.com/model v0.2.7 and webtyp.com/view v0.6.47 are published. Rewritten 2026-10-27: no Item(), no hand-written lister. -->
 
 > Read AGENTS.md at the repo root before any change.
 
@@ -15,6 +15,8 @@ SESSION: 2572021172994679483
 go install webtyp.com/devflow/cmd/gotest@latest
 go install webtyp.com/lang/cmd/langc@latest
 go install webtyp.com/ormc/cmd/ormc@latest
+go get webtyp.com/model@v0.2.7
+go get webtyp.com/view@v0.6.47
 ```
 
 ## Why
@@ -26,13 +28,14 @@ Additionally, `langc sync .` detected a reuse warning on `closing_cash_counted` 
 
 | symbol | exact signature | tag | file |
 |---|---|---|---|
-| `view.Screen` | `type Screen struct { ID string; Label lang.Text; Icon string; Permission model.Resource; Presenter Presenter; Lookups []Lookup; Help lang.Text; Children []Screen }` | `webtyp.com/view@v0.6.45` | `view/screen.go` |
-| `view.WithDescription` | `func WithDescription(d lang.Text) Option` | `webtyp.com/view@v0.6.45` | `view/options.go` |
-| `view.WithTitle` | `func WithTitle(t string) Option` | `webtyp.com/view@v0.6.45` | `view/options.go` |
-| `view.New` | `func New(source Lister, target model.Model, opts ...Option) Presenter` | `webtyp.com/view@v0.6.45` | `view/view.go` |
-| `view.Item` | `type Item struct { ID, Label, Description, Sublabel, LeadTop, LeadMain, LeadBottom string }` | `webtyp.com/view@v0.6.45` | `view/item.go` |
-| `view.Itemizer` | `type Itemizer interface { Item() Item }` | `webtyp.com/view@v0.6.45` | `view/item.go` |
-| `router.Caller` | `type Caller interface { Call(op string, args, out any, done func(error)) }` | `webtyp.com/router@v0.4.6` | `router/caller.go` |
+| `view.Screen` | leaf: `ID string; Label lang.Text; Icon string; Permission model.Resource; Presenter Presenter` (or `Component dom.Component` + `Help`); group: `Help`, `Children` | `webtyp.com/view@v0.6.47` | `screen.go` |
+| `view.WithDescription` | `func WithDescription(d lang.Text) Option` | `webtyp.com/view@v0.6.47` | `view.go` |
+| `view.WithTitle` | `func WithTitle(title string) Option` | `webtyp.com/view@v0.6.47` | `view.go` |
+| `view.New` | `func New(l Lister, record model.Model, opts ...Option) Presenter` | `webtyp.com/view@v0.6.47` | `view.go` |
+| `view.NewCallerLister` | `func NewCallerLister(c router.Caller, ops Ops, newList func() model.ModelSlice) Lister` — `c` must come from `view.Records.Caller` | `webtyp.com/view@v0.6.47` | `caller_lister.go` |
+| `view.Ops` | `struct { Module, List, Save, Update, Delete string; Actions []Action }` | `webtyp.com/view@v0.6.47` | `caller_lister.go` |
+| `model.Field.Row` | `Row RowSlot`; `model.RowTitle`, `model.RowDetail` | `webtyp.com/model@v0.2.7` | `field.go`, `row.go` |
+| `router.Caller` | `Call(op string, args model.Encodable, into model.Decodable, done func(error))` | router (version in `go.mod`) | `caller.go` |
 
 If a signature in the published tag differs from this table, stop and name the symbol in the PR; never adapt it by guessing.
 
@@ -54,13 +57,11 @@ Files: `model.go`, `model_orm.go`
 
 ## Stage 2: View presenter and default list in ops.go
 
-1. Create `view.go` at module root:
+1. Create `view.go` at module root (no `Item()`: the row is declared on the fields, step 1b):
 ```go
 package cashmanager
 
 import (
-	"webtyp.com/fmt"
-	"webtyp.com/lang"
 	"webtyp.com/model"
 	"webtyp.com/router"
 	"webtyp.com/view"
@@ -71,40 +72,20 @@ const (
 	OpListStoredFacts = "ListStoredFacts"
 )
 
-// Item implementa view.Itemizer para StoredFact.
-func (f *StoredFact) Item() view.Item {
-	return view.Item{
-		ID:          f.Id,
-		Label:       f.Kind + " · " + f.Currency + " " + fmt.Sprint(f.Amount),
-		Description: f.Scope + " · " + f.SourceType + " " + f.SourceId,
-	}
-}
-
 // NewView construye el Presenter de consulta de hechos de caja.
+// Ejemplo: pres := cashmanager.NewView(caller, view.WithDescription(descCash))
 func NewView(caller router.Caller, opts ...view.Option) view.Presenter {
+	l := view.NewCallerLister(caller,
+		view.Ops{Module: ModelName, List: OpListStoredFacts},
+		func() model.ModelSlice { return &StoredFactList{} })
 	allOpts := append([]view.Option{view.WithTitle(titleCashManager)}, opts...)
-	return view.New(&factLister{caller: caller}, &StoredFact{}, allOpts...)
-}
-
-type factLister struct {
-	caller router.Caller
-}
-
-func (l *factLister) List(done func([]model.Model, error)) {
-	out := &StoredFactList{}
-	l.caller.Call(ModelName+"."+OpListStoredFacts, nil, out, func(err error) {
-		if err != nil {
-			done(nil, err)
-			return
-		}
-		rows := make([]model.Model, len(*out))
-		for i, f := range *out {
-			rows[i] = f
-		}
-		done(rows, nil)
-	})
+	return view.New(l, &StoredFact{}, allOpts...)
 }
 ```
+
+1b. In `model.go`, `StoredFactModel`: mark `kind` with `Row: model.RowTitle`, and `currency`, `amount`, `scope`,
+`source_type`, `source_id` with `Row: model.RowDetail` (in that field order; reorder nothing else). The `id` field
+must be the primary key. Run `ormc`.
 
 2. In `ops.go`, update `listStoredFacts` to support listing when `From`/`To` are zero (default to past 30 days) and when `Scope` is empty (query all facts for the tenant):
 ```go
@@ -116,8 +97,7 @@ func (m *Module) listStoredFacts(ctx router.Context) {
 	}
 
 	if args.TenantId == "" {
-		ctx.WriteStatus(400); ctx.Write([]byte("bad request"))
-		return
+		args.TenantId = m.tenantID // the installation's tenant, as device_manager does (ops.go tenantOr); if Module has no tenantID field, stop and say so in the PR
 	}
 
 	now := time.NowUnix()
@@ -185,6 +165,8 @@ func Screens(caller router.Caller) []view.Screen {
 Files: `ui/browser.go`
 
 ## Stage 4: Test and Translations
+
+Every test that builds `NewView(caller)` wraps the caller once: `view.NewRecords().Caller(caller)` (`view.NewCallerLister` panics otherwise). Add one test asserting `model.RowOf(&fact)` for a known `StoredFact` (`Title` = kind, `Detail` = "currency · amount · scope · source_type · source_id").
 
 1. Add `tests/ui_view_browser_test.go`:
 ```go
