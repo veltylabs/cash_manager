@@ -5,6 +5,7 @@ package cashmanager
 import (
 	"webtyp.com/model"
 	"webtyp.com/orm"
+	"webtyp.com/fmt"
 	"webtyp.com/time"
 )
 
@@ -189,6 +190,10 @@ func (s *StoredFactList) DecodeFields(_ model.FieldReader) {}
 
 func (m *StoredFact) Validate(action byte) error {
 	return model.ValidateFields(action, m)
+}
+
+func (m *StoredFact) Item() model.Item {
+	return model.Item{ID: m.Id, Label: m.Kind, Description: model.JoinItem(m.Currency, fmt.Convert(m.Amount).String(), m.Scope, m.SourceType, m.SourceId)}
 }
 
 var StoredFact_ = struct {

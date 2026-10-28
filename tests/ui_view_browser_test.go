@@ -7,7 +7,6 @@ import (
 
 	cashmanager "github.com/veltylabs/cash_manager"
 	"github.com/veltylabs/cash_manager/ui"
-	"webtyp.com/model"
 	"webtyp.com/router/mock"
 	"webtyp.com/view"
 )
@@ -32,7 +31,7 @@ func TestUIScreens(t *testing.T) {
 	}
 }
 
-func TestRowOf(t *testing.T) {
+func TestItemsDeclaredOnFields(t *testing.T) {
 	fact := cashmanager.StoredFact{
 		Kind:       "charge",
 		Amount:     1000,
@@ -42,13 +41,13 @@ func TestRowOf(t *testing.T) {
 		SourceId:   "ord-456",
 	}
 
-	row := model.RowOf(&fact)
-	if row.Title != "charge" {
-		t.Fatalf("expected Title 'charge', got %q", row.Title)
+	item := fact.Item()
+	if item.Label != "charge" {
+		t.Fatalf("expected Label 'charge', got %q", item.Label)
 	}
 
-	expectedDetail := "EUR · 1000 · shift-123 · order · ord-456"
-	if row.Detail != expectedDetail {
-		t.Fatalf("expected Detail %q, got %q", expectedDetail, row.Detail)
+	expectedDescription := "EUR · 1000 · shift-123 · order · ord-456"
+	if item.Description != expectedDescription {
+		t.Fatalf("expected Description %q, got %q", expectedDescription, item.Description)
 	}
 }
