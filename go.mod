@@ -3,7 +3,7 @@ module github.com/veltylabs/cash_manager
 go 1.26.8
 
 require (
-	webtyp.com/ddl v0.0.27
+	webtyp.com/ddl v0.0.32
 	webtyp.com/events v0.1.0
 	webtyp.com/fmt v1.0.0
 	webtyp.com/lang v0.1.10
