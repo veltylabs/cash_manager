@@ -7,7 +7,6 @@ import (
 	"webtyp.com/time"
 
 	"webtyp.com/orm"
-
 )
 
 type TodayResponse struct {
@@ -16,7 +15,7 @@ type TodayResponse struct {
 }
 
 func (r *TodayResponse) Schema() []model.Field { return nil }
-func (r *TodayResponse) Pointers() []any { return nil }
+func (r *TodayResponse) Pointers() []any       { return nil }
 func (r *TodayResponse) EncodeFields(w model.FieldWriter) {
 	if r.Shift != nil {
 		w.Object("shift", r.Shift)
@@ -25,7 +24,6 @@ func (r *TodayResponse) EncodeFields(w model.FieldWriter) {
 	for _, f := range r.Facts {
 		arr.Object(f)
 	}
-	arr.Close()
 }
 func (r *TodayResponse) DecodeFields(r2 model.FieldReader) {
 	shift := &Shift{}
@@ -48,13 +46,12 @@ type ReorderResponse struct {
 }
 
 func (r *ReorderResponse) Schema() []model.Field { return nil }
-func (r *ReorderResponse) Pointers() []any { return nil }
+func (r *ReorderResponse) Pointers() []any       { return nil }
 func (r *ReorderResponse) EncodeFields(w model.FieldWriter) {
 	arr := w.Array("items", len(r.Items))
 	for i := range r.Items {
 		arr.Object(&r.Items[i])
 	}
-	arr.Close()
 }
 func (r *ReorderResponse) DecodeFields(r2 model.FieldReader) {
 	if ar, ok := r2.Array("items"); ok {
@@ -72,19 +69,17 @@ type ThirtyDayResponse struct {
 }
 
 func (r *ThirtyDayResponse) Schema() []model.Field { return nil }
-func (r *ThirtyDayResponse) Pointers() []any { return nil }
+func (r *ThirtyDayResponse) Pointers() []any       { return nil }
 func (r *ThirtyDayResponse) EncodeFields(w model.FieldWriter) {
 	arr := w.Array("facts", len(r.Facts))
 	for _, f := range r.Facts {
 		arr.Object(f)
 	}
-	arr.Close()
 
 	arrF := w.Array("forecast", len(r.Forecast))
 	for i := range r.Forecast {
 		arrF.Object(&r.Forecast[i])
 	}
-	arrF.Close()
 }
 func (r *ThirtyDayResponse) DecodeFields(r2 model.FieldReader) {
 	if ar, ok := r2.Array("facts"); ok {
@@ -107,12 +102,14 @@ func (r *ThirtyDayResponse) IsNil() bool { return r == nil }
 func (m *Module) openShift(ctx router.Context) {
 	var args OpenShiftArgs
 	if err := ctx.Decode(&args); err != nil {
-		ctx.WriteStatus(400); ctx.Write([]byte("bad request"))
+		ctx.WriteStatus(400)
+		ctx.Write([]byte("bad request"))
 		return
 	}
 
 	if args.TenantId == "" || args.CashierId == "" || args.Currency == "" {
-		ctx.WriteStatus(400); ctx.Write([]byte("bad request"))
+		ctx.WriteStatus(400)
+		ctx.Write([]byte("bad request"))
 		return
 	}
 
@@ -123,11 +120,13 @@ func (m *Module) openShift(ctx router.Context) {
 
 	existing, err := ReadAllShift(qb)
 	if err != nil {
-		ctx.WriteStatus(500); ctx.Write([]byte("internal error"))
+		ctx.WriteStatus(500)
+		ctx.Write([]byte("internal error"))
 		return
 	}
 	if len(existing) > 0 {
-		ctx.WriteStatus(409); ctx.Write([]byte("conflict"))
+		ctx.WriteStatus(409)
+		ctx.Write([]byte("conflict"))
 		return
 	}
 
@@ -145,12 +144,14 @@ func (m *Module) openShift(ctx router.Context) {
 	}
 
 	if err := shift.Validate(model.ActionCreate); err != nil {
-		ctx.WriteStatus(400); ctx.Write([]byte("bad request"))
+		ctx.WriteStatus(400)
+		ctx.Write([]byte("bad request"))
 		return
 	}
 
 	if err := m.db.Create(shift); err != nil {
-		ctx.WriteStatus(500); ctx.Write([]byte("internal error"))
+		ctx.WriteStatus(500)
+		ctx.Write([]byte("internal error"))
 		return
 	}
 
@@ -160,12 +161,14 @@ func (m *Module) openShift(ctx router.Context) {
 func (m *Module) closeShift(ctx router.Context) {
 	var args CloseShiftArgs
 	if err := ctx.Decode(&args); err != nil {
-		ctx.WriteStatus(400); ctx.Write([]byte("bad request"))
+		ctx.WriteStatus(400)
+		ctx.Write([]byte("bad request"))
 		return
 	}
 
 	if args.TenantId == "" || args.Id == "" {
-		ctx.WriteStatus(400); ctx.Write([]byte("bad request"))
+		ctx.WriteStatus(400)
+		ctx.Write([]byte("bad request"))
 		return
 	}
 
@@ -177,15 +180,18 @@ func (m *Module) closeShift(ctx router.Context) {
 	_, err := ReadOneShift(qb, shift)
 	if err != nil {
 		if orm.IsNotFound(err) {
-			ctx.WriteStatus(404); ctx.Write([]byte("not found"))
+			ctx.WriteStatus(404)
+			ctx.Write([]byte("not found"))
 			return
 		}
-		ctx.WriteStatus(500); ctx.Write([]byte("internal error"))
+		ctx.WriteStatus(500)
+		ctx.Write([]byte("internal error"))
 		return
 	}
 
 	if shift.Status == ShiftClosed {
-		ctx.WriteStatus(409); ctx.Write([]byte("conflict"))
+		ctx.WriteStatus(409)
+		ctx.Write([]byte("conflict"))
 		return
 	}
 
@@ -198,7 +204,8 @@ func (m *Module) closeShift(ctx router.Context) {
 
 	facts, err := ReadAllStoredFact(factQb)
 	if err != nil {
-		ctx.WriteStatus(500); ctx.Write([]byte("internal error"))
+		ctx.WriteStatus(500)
+		ctx.Write([]byte("internal error"))
 		return
 	}
 
@@ -225,7 +232,8 @@ func (m *Module) closeShift(ctx router.Context) {
 	// We validate only the updated fields via UpdateFields, so skip Validate entirely. UpdateFields will validate the specific fields.
 
 	if err := m.db.UpdateFields(shift, []string{Shift_.Status, Shift_.ClosingCashCounted, Shift_.ClosingCashExpected, Shift_.Difference, Shift_.ClosedAt, Shift_.UpdatedAt}, orm.Eq(Shift_.Id, args.Id), orm.Eq(Shift_.TenantId, args.TenantId)); err != nil {
-		ctx.WriteStatus(500); ctx.Write([]byte("internal error"))
+		ctx.WriteStatus(500)
+		ctx.Write([]byte("internal error"))
 		return
 	}
 
@@ -235,12 +243,14 @@ func (m *Module) closeShift(ctx router.Context) {
 func (m *Module) getToday(ctx router.Context) {
 	var args GetTodayArgs
 	if err := ctx.Decode(&args); err != nil {
-		ctx.WriteStatus(400); ctx.Write([]byte("bad request"))
+		ctx.WriteStatus(400)
+		ctx.Write([]byte("bad request"))
 		return
 	}
 
 	if args.TenantId == "" || args.CashierId == "" {
-		ctx.WriteStatus(400); ctx.Write([]byte("bad request"))
+		ctx.WriteStatus(400)
+		ctx.Write([]byte("bad request"))
 		return
 	}
 
@@ -251,7 +261,8 @@ func (m *Module) getToday(ctx router.Context) {
 
 	shifts, err := ReadAllShift(qb)
 	if err != nil {
-		ctx.WriteStatus(500); ctx.Write([]byte("internal error"))
+		ctx.WriteStatus(500)
+		ctx.Write([]byte("internal error"))
 		return
 	}
 
@@ -270,7 +281,8 @@ func (m *Module) getToday(ctx router.Context) {
 
 	facts, err := ReadAllStoredFact(factQb)
 	if err != nil {
-		ctx.WriteStatus(500); ctx.Write([]byte("internal error"))
+		ctx.WriteStatus(500)
+		ctx.Write([]byte("internal error"))
 		return
 	}
 
@@ -283,7 +295,8 @@ func (m *Module) getToday(ctx router.Context) {
 func (m *Module) listStoredFacts(ctx router.Context) {
 	var args ListStoredFactsArgs
 	if err := ctx.Decode(&args); err != nil {
-		ctx.WriteStatus(400); ctx.Write([]byte("bad request"))
+		ctx.WriteStatus(400)
+		ctx.Write([]byte("bad request"))
 		return
 	}
 
@@ -309,7 +322,8 @@ func (m *Module) listStoredFacts(ctx router.Context) {
 
 	facts, err := ReadAllStoredFact(qb)
 	if err != nil {
-		ctx.WriteStatus(500); ctx.Write([]byte("internal error"))
+		ctx.WriteStatus(500)
+		ctx.Write([]byte("internal error"))
 		return
 	}
 
@@ -322,7 +336,8 @@ func (m *Module) reorder(ctx router.Context) {
 		var err error
 		items, err = m.deps.LowStock.LowStock(m.deps.TenantID)
 		if err != nil {
-			ctx.WriteStatus(500); ctx.Write([]byte("internal error"))
+			ctx.WriteStatus(500)
+			ctx.Write([]byte("internal error"))
 			return
 		}
 	}
@@ -336,12 +351,14 @@ func (m *Module) reorder(ctx router.Context) {
 func (m *Module) thirtyDay(ctx router.Context) {
 	var args ListStoredFactsArgs
 	if err := ctx.Decode(&args); err != nil {
-		ctx.WriteStatus(400); ctx.Write([]byte("bad request"))
+		ctx.WriteStatus(400)
+		ctx.Write([]byte("bad request"))
 		return
 	}
 
 	if args.TenantId == "" || args.From == 0 || args.To == 0 {
-		ctx.WriteStatus(400); ctx.Write([]byte("bad request"))
+		ctx.WriteStatus(400)
+		ctx.Write([]byte("bad request"))
 		return
 	}
 
@@ -356,7 +373,8 @@ func (m *Module) thirtyDay(ctx router.Context) {
 
 	facts, err := ReadAllStoredFact(qb)
 	if err != nil {
-		ctx.WriteStatus(500); ctx.Write([]byte("internal error"))
+		ctx.WriteStatus(500)
+		ctx.Write([]byte("internal error"))
 		return
 	}
 
@@ -364,7 +382,8 @@ func (m *Module) thirtyDay(ctx router.Context) {
 	if m.deps.Forecast != nil {
 		forecast, err = m.deps.Forecast.PendingAccruals(args.TenantId, args.From, args.To)
 		if err != nil {
-			ctx.WriteStatus(500); ctx.Write([]byte("internal error"))
+			ctx.WriteStatus(500)
+			ctx.Write([]byte("internal error"))
 			return
 		}
 	}
