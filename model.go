@@ -5,7 +5,8 @@ import (
 	"webtyp.com/time"
 )
 
-const ResourceCashManager = "cashmanager"
+var ResourceFeatureReorder = model.FeatureResource("reorder")
+var ResourceFeatureThirtyDay = model.FeatureResource("thirty_day")
 
 const (
 	ShiftOpen   = "open"

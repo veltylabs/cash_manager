@@ -1,12 +1,11 @@
 package cashmanager
 
-type domainError string
-
-func (e domainError) Error() string { return string(e) }
+import "webtyp.com/model"
 
 const (
-	ErrNotFound           domainError = "shift not found"
-	ErrValidationFailed   domainError = "validation failed"
-	ErrShiftAlreadyOpen   domainError = "a shift is already open for this cashier"
-	ErrShiftAlreadyClosed domainError = "shift already closed"
+	ErrNotFound           model.NotFound = "shift not found"
+	ErrValidationFailed   model.Invalid  = "validation failed"
+	ErrShiftAlreadyOpen   model.Conflict = "a shift is already open for this cashier"
+	ErrShiftAlreadyClosed model.Conflict = "shift already closed"
+	ErrCannotRead         model.Invalid  = "cash_manager: cannot read the request"
 )

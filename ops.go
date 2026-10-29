@@ -7,6 +7,7 @@ import (
 	"webtyp.com/time"
 
 	"webtyp.com/orm"
+	"webtyp.com/rpc"
 )
 
 type TodayResponse struct {
@@ -102,14 +103,12 @@ func (r *ThirtyDayResponse) IsNil() bool { return r == nil }
 func (m *Module) openShift(ctx router.Context) {
 	var args OpenShiftArgs
 	if err := ctx.Decode(&args); err != nil {
-		ctx.WriteStatus(400)
-		ctx.Write([]byte("bad request"))
+		rpc.WriteError(ctx, ErrCannotRead)
 		return
 	}
 
 	if args.TenantId == "" || args.CashierId == "" || args.Currency == "" {
-		ctx.WriteStatus(400)
-		ctx.Write([]byte("bad request"))
+		rpc.WriteError(ctx, ErrValidationFailed)
 		return
 	}
 
@@ -120,13 +119,11 @@ func (m *Module) openShift(ctx router.Context) {
 
 	existing, err := ReadAllShift(qb)
 	if err != nil {
-		ctx.WriteStatus(500)
-		ctx.Write([]byte("internal error"))
+		rpc.WriteError(ctx, err)
 		return
 	}
 	if len(existing) > 0 {
-		ctx.WriteStatus(409)
-		ctx.Write([]byte("conflict"))
+		rpc.WriteError(ctx, ErrShiftAlreadyOpen)
 		return
 	}
 
@@ -144,14 +141,12 @@ func (m *Module) openShift(ctx router.Context) {
 	}
 
 	if err := shift.Validate(model.ActionCreate); err != nil {
-		ctx.WriteStatus(400)
-		ctx.Write([]byte("bad request"))
+		rpc.WriteError(ctx, err)
 		return
 	}
 
 	if err := m.db.Create(shift); err != nil {
-		ctx.WriteStatus(500)
-		ctx.Write([]byte("internal error"))
+		rpc.WriteError(ctx, err)
 		return
 	}
 
@@ -161,14 +156,12 @@ func (m *Module) openShift(ctx router.Context) {
 func (m *Module) closeShift(ctx router.Context) {
 	var args CloseShiftArgs
 	if err := ctx.Decode(&args); err != nil {
-		ctx.WriteStatus(400)
-		ctx.Write([]byte("bad request"))
+		rpc.WriteError(ctx, ErrCannotRead)
 		return
 	}
 
 	if args.TenantId == "" || args.Id == "" {
-		ctx.WriteStatus(400)
-		ctx.Write([]byte("bad request"))
+		rpc.WriteError(ctx, ErrValidationFailed)
 		return
 	}
 
@@ -180,18 +173,15 @@ func (m *Module) closeShift(ctx router.Context) {
 	_, err := ReadOneShift(qb, shift)
 	if err != nil {
 		if orm.IsNotFound(err) {
-			ctx.WriteStatus(404)
-			ctx.Write([]byte("not found"))
+			rpc.WriteError(ctx, ErrNotFound)
 			return
 		}
-		ctx.WriteStatus(500)
-		ctx.Write([]byte("internal error"))
+		rpc.WriteError(ctx, err)
 		return
 	}
 
 	if shift.Status == ShiftClosed {
-		ctx.WriteStatus(409)
-		ctx.Write([]byte("conflict"))
+		rpc.WriteError(ctx, ErrShiftAlreadyClosed)
 		return
 	}
 
@@ -204,8 +194,7 @@ func (m *Module) closeShift(ctx router.Context) {
 
 	facts, err := ReadAllStoredFact(factQb)
 	if err != nil {
-		ctx.WriteStatus(500)
-		ctx.Write([]byte("internal error"))
+		rpc.WriteError(ctx, err)
 		return
 	}
 
@@ -232,8 +221,7 @@ func (m *Module) closeShift(ctx router.Context) {
 	// We validate only the updated fields via UpdateFields, so skip Validate entirely. UpdateFields will validate the specific fields.
 
 	if err := m.db.UpdateFields(shift, []string{Shift_.Status, Shift_.ClosingCashCounted, Shift_.ClosingCashExpected, Shift_.Difference, Shift_.ClosedAt, Shift_.UpdatedAt}, orm.Eq(Shift_.Id, args.Id), orm.Eq(Shift_.TenantId, args.TenantId)); err != nil {
-		ctx.WriteStatus(500)
-		ctx.Write([]byte("internal error"))
+		rpc.WriteError(ctx, err)
 		return
 	}
 
@@ -243,14 +231,12 @@ func (m *Module) closeShift(ctx router.Context) {
 func (m *Module) getToday(ctx router.Context) {
 	var args GetTodayArgs
 	if err := ctx.Decode(&args); err != nil {
-		ctx.WriteStatus(400)
-		ctx.Write([]byte("bad request"))
+		rpc.WriteError(ctx, ErrCannotRead)
 		return
 	}
 
 	if args.TenantId == "" || args.CashierId == "" {
-		ctx.WriteStatus(400)
-		ctx.Write([]byte("bad request"))
+		rpc.WriteError(ctx, ErrValidationFailed)
 		return
 	}
 
@@ -261,8 +247,7 @@ func (m *Module) getToday(ctx router.Context) {
 
 	shifts, err := ReadAllShift(qb)
 	if err != nil {
-		ctx.WriteStatus(500)
-		ctx.Write([]byte("internal error"))
+		rpc.WriteError(ctx, err)
 		return
 	}
 
@@ -281,8 +266,7 @@ func (m *Module) getToday(ctx router.Context) {
 
 	facts, err := ReadAllStoredFact(factQb)
 	if err != nil {
-		ctx.WriteStatus(500)
-		ctx.Write([]byte("internal error"))
+		rpc.WriteError(ctx, err)
 		return
 	}
 
@@ -295,8 +279,7 @@ func (m *Module) getToday(ctx router.Context) {
 func (m *Module) listStoredFacts(ctx router.Context) {
 	var args ListStoredFactsArgs
 	if err := ctx.Decode(&args); err != nil {
-		ctx.WriteStatus(400)
-		ctx.Write([]byte("bad request"))
+		rpc.WriteError(ctx, ErrCannotRead)
 		return
 	}
 
@@ -322,8 +305,7 @@ func (m *Module) listStoredFacts(ctx router.Context) {
 
 	facts, err := ReadAllStoredFact(qb)
 	if err != nil {
-		ctx.WriteStatus(500)
-		ctx.Write([]byte("internal error"))
+		rpc.WriteError(ctx, err)
 		return
 	}
 
@@ -336,8 +318,7 @@ func (m *Module) reorder(ctx router.Context) {
 		var err error
 		items, err = m.deps.LowStock.LowStock(m.deps.TenantID)
 		if err != nil {
-			ctx.WriteStatus(500)
-			ctx.Write([]byte("internal error"))
+			rpc.WriteError(ctx, err)
 			return
 		}
 	}
@@ -351,14 +332,12 @@ func (m *Module) reorder(ctx router.Context) {
 func (m *Module) thirtyDay(ctx router.Context) {
 	var args ListStoredFactsArgs
 	if err := ctx.Decode(&args); err != nil {
-		ctx.WriteStatus(400)
-		ctx.Write([]byte("bad request"))
+		rpc.WriteError(ctx, ErrCannotRead)
 		return
 	}
 
 	if args.TenantId == "" || args.From == 0 || args.To == 0 {
-		ctx.WriteStatus(400)
-		ctx.Write([]byte("bad request"))
+		rpc.WriteError(ctx, ErrValidationFailed)
 		return
 	}
 
@@ -373,8 +352,7 @@ func (m *Module) thirtyDay(ctx router.Context) {
 
 	facts, err := ReadAllStoredFact(qb)
 	if err != nil {
-		ctx.WriteStatus(500)
-		ctx.Write([]byte("internal error"))
+		rpc.WriteError(ctx, err)
 		return
 	}
 
@@ -382,8 +360,7 @@ func (m *Module) thirtyDay(ctx router.Context) {
 	if m.deps.Forecast != nil {
 		forecast, err = m.deps.Forecast.PendingAccruals(args.TenantId, args.From, args.To)
 		if err != nil {
-			ctx.WriteStatus(500)
-			ctx.Write([]byte("internal error"))
+			rpc.WriteError(ctx, err)
 			return
 		}
 	}

@@ -5,6 +5,8 @@ package ui
 import (
 	cashmanager "github.com/veltylabs/cash_manager"
 	"webtyp.com/lang"
+	"webtyp.com/model"
+
 	"webtyp.com/router"
 	"webtyp.com/view"
 )
@@ -21,7 +23,7 @@ func Screens(caller router.Caller) []view.Screen {
 			ID:         ID,
 			Label:      Label,
 			Icon:       ID,
-			Permission: cashmanager.ResourceCashManager,
+			Permission: model.ResourceOf(&cashmanager.StoredFactModel),
 			Presenter:  cashmanager.NewView(caller, view.WithDescription(descCash)),
 		},
 	}
