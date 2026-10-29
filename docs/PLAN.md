@@ -122,3 +122,7 @@ GOPRIVATE=webtyp.com/*,github.com/veltylabs/* GOFLAGS=-mod=mod gotest
 | 5 | `lang.json`, `ui/`, `model.go` | `langc sync .` clean |
 | 6 | `tests/*`, demo | suite green, screenshots in PR |
 | 7 | `README.md` | text present |
+
+## Executor notes
+- Could not replace `==/!=` with `model.KindOf` in `ui/browser.go` since I could not find any error handling comparisons inside it (it's just a view mount).
+- Could not capture screenshots for the demo because I cannot manually launch a web browser.
