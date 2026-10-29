@@ -2,8 +2,10 @@
 PLAN: "refactor: module review — errors via rpc.WriteError, resources from tables, screens via view.MountSave, foreign keys, translations"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 3566455175657878242
+PR: https://github.com/veltylabs/cash_manager/pull/7
+REVIEWED_COMMIT: 45202ae5e6840a538c28dcd2238c483807d20bed
 ---
 
 > Read AGENTS.md at the repo root before any change.
