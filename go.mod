@@ -3,7 +3,7 @@ module github.com/veltylabs/cash_manager
 go 1.26.8
 
 require (
-	webtyp.com/ddl v0.0.32
+	webtyp.com/ddl v0.0.36
 	webtyp.com/events v0.1.0
 	webtyp.com/fmt v1.0.0
 	webtyp.com/lang v0.1.10
@@ -11,6 +11,7 @@ require (
 	webtyp.com/money v0.2.0
 	webtyp.com/orm v0.12.20
 	webtyp.com/router v0.4.12
+	webtyp.com/rpc v0.2.7
 	webtyp.com/storage v0.1.10
 	webtyp.com/time v0.6.2
 	webtyp.com/unixid v0.3.1
@@ -24,5 +25,4 @@ require (
 	webtyp.com/fetch v0.1.29 // indirect
 	webtyp.com/filepath v0.1.0 // indirect
 	webtyp.com/json v0.5.37 // indirect
-	webtyp.com/rpc v0.2.7 // indirect
 )
