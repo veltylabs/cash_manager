@@ -6,7 +6,7 @@ require (
 	webtyp.com/ddl v0.0.39
 	webtyp.com/events v0.1.0
 	webtyp.com/fmt v1.0.0
-	webtyp.com/lang v0.1.10
+	webtyp.com/lang v0.1.12
 	webtyp.com/model v0.2.12
 	webtyp.com/money v0.2.0
 	webtyp.com/orm v0.12.25
