@@ -10,7 +10,7 @@ Cash shifts per person, opening/closing with cash count, and money.Sink for oper
 | `OpenShift` | `OpenShiftArgs` | `Create` | `Shift` |
 | `CloseShift` | `CloseShiftArgs` | `Update` | `Shift` |
 | `GetToday` | `GetTodayArgs` | `Read` | `TodayResponse` |
-| `ListStoredFacts` | `ListStoredFactsArgs` | `Read` | `StoredFactList` |
+| `ListStoredFacts` | `view.ListArgs` | `Read` | `StoredFactList` |
 | `Reorder` | - | `Read` | `ReorderResponse` |
 | `ThirtyDay` | `ListStoredFactsArgs` | `Read` | `ThirtyDayResponse` |
 
@@ -23,6 +23,8 @@ Un turno (`Shift`) calcula su efectivo esperado (`ClosingCashExpected`) consider
 - Ocurridos durante la ventana del turno (`At >= shift.OpenedAt` y `At <= shift.ClosedAt`).
 
 Los pagos con tarjeta (`MeansCard`), transferencias (`MeansTransfer`) u operados por otro personal no alteran el arqueo de efectivo del turno en caja.
+
+La lista carga paginada y se busca en el servidor según declara view.Page.
 
 ## Key Files
 

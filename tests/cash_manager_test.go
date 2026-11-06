@@ -16,6 +16,7 @@ import (
 	"webtyp.com/storage/mem"
 	time2 "webtyp.com/time"
 	"webtyp.com/router"
+	"webtyp.com/view"
 )
 
 type mockID struct{ counter int }
@@ -42,7 +43,7 @@ func TestAcceptIdempotency(t *testing.T) {
 
 	fact := money.Fact{
 		Kind:       money.Charged,
-		Side:       1,
+		Side:       money.Inflow,
 		Amount:     money.Money{Amount: 1000, Currency: "USD"},
 		Scope:      "test",
 		Source:     money.Ref{Type: "testsrc", ID: "src1"},
@@ -118,7 +119,7 @@ func TestMoneySubscribeWiring(t *testing.T) {
 
 	fact := money.Fact{
 		Kind:       money.Charged,
-		Side:       1,
+		Side:       money.Inflow,
 		Amount:     money.Money{Amount: 1000, Currency: "USD"},
 		Scope:      "test",
 		Source:     money.Ref{Type: "testsrc", ID: "src2"},
@@ -277,6 +278,79 @@ func TestNilSafetyReaders(t *testing.T) {
 
 	if err := <-errCh; err != nil {
 		t.Fatalf("ThirtyDay failed: %v", err)
+	}
+}
+
+func TestCashManager_ListAcceptsListArgs(t *testing.T) {
+	m, _, caller := setup()
+
+	now := time2.NowUnix()
+
+	// Insert test data
+	facts := []money.Fact{
+		{
+			Kind:   money.Charged,
+			Side:   money.Inflow,
+			Amount: money.Money{Amount: 1000, Currency: "USD"},
+			Scope:  "scope1",
+			Source: money.Ref{Type: "src", ID: "1"},
+			At:     now,
+			Means:  money.MeansCash,
+		},
+		{
+			Kind:   money.Refunded,
+			Side:   money.Outflow,
+			Amount: money.Money{Amount: 500, Currency: "USD"},
+			Scope:  "scope1",
+			Source: money.Ref{Type: "src", ID: "2"},
+			At:     now + 1,
+			Means:  money.MeansCash,
+		},
+	}
+
+	for _, f := range facts {
+		if err := m.Accept(f); err != nil {
+			t.Fatalf("Accept failed: %v", err)
+		}
+	}
+
+	errCh := make(chan error, 1)
+
+	// Call with Limit: 1
+	var list cashmanager.StoredFactList
+	caller.Call("cashmanager.ListStoredFacts", &view.ListArgs{Limit: 1}, &list, func(err error) { errCh <- err })
+	if err := <-errCh; err != nil {
+		t.Fatalf("ListStoredFacts with limit failed: %v", err)
+	}
+	if len(list) != 1 {
+		t.Fatalf("expected 1 fact, got %d", len(list))
+	}
+
+	firstID := list[0].Id
+
+	// Call with Search
+	var listSearch cashmanager.StoredFactList
+	caller.Call("cashmanager.ListStoredFacts", &view.ListArgs{Search: "REFUND"}, &listSearch, func(err error) { errCh <- err })
+	if err := <-errCh; err != nil {
+		t.Fatalf("ListStoredFacts with search failed: %v", err)
+	}
+	if len(listSearch) != 1 {
+		t.Fatalf("expected 1 fact with search 'refund', got %d", len(listSearch))
+	}
+	if listSearch[0].Kind != string(money.Refunded) {
+		t.Fatalf("expected fact Kind to be refunded, got %s", listSearch[0].Kind)
+	}
+
+	// Call with After
+	var listAfter cashmanager.StoredFactList
+	caller.Call("cashmanager.ListStoredFacts", &view.ListArgs{After: firstID}, &listAfter, func(err error) { errCh <- err })
+	if err := <-errCh; err != nil {
+		t.Fatalf("ListStoredFacts with after failed: %v", err)
+	}
+	for _, f := range listAfter {
+		if f.Id == firstID {
+			t.Fatalf("first row was included in the results after skipping it")
+		}
 	}
 }
 
