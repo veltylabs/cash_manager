@@ -2,8 +2,10 @@
 PLAN: "feat!: paged lists searched on the server (view v0.6.64)"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 10160213878497557623
+PR: https://github.com/veltylabs/cash_manager/pull/8
+REVIEWED_COMMIT: f7f1aa647f82de15f2da747ce3028fd67a37ce7e
 ---
 
 > Read AGENTS.md at the repo root before any change.
