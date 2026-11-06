@@ -9,6 +9,7 @@ import (
 	"webtyp.com/money"
 	"webtyp.com/orm"
 	"webtyp.com/router"
+	"webtyp.com/view"
 )
 
 var _ money.Sink = (*Module)(nil)
@@ -45,7 +46,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 	reg.Operation("OpenShift", m.openShift).Requires(model.ResourceOf(&ShiftModel), model.Create).Accepts(&OpenShiftArgs{})
 	reg.Operation("CloseShift", m.closeShift).Requires(model.ResourceOf(&ShiftModel), model.Update).Accepts(&CloseShiftArgs{})
 	reg.Operation("GetToday", m.getToday).Requires(model.ResourceOf(&ShiftModel), model.Read).Accepts(&GetTodayArgs{})
-	reg.Operation("ListStoredFacts", m.listStoredFacts).Requires(model.ResourceOf(&StoredFactModel), model.Read).Accepts(&ListStoredFactsArgs{})
+	reg.Operation("ListStoredFacts", m.listStoredFacts).Requires(model.ResourceOf(&StoredFactModel), model.Read).Accepts(&view.ListArgs{})
 	reg.Operation("Reorder", m.reorder).Requires(ResourceFeatureReorder, model.Read).Accepts(nil)
 	reg.Operation("ThirtyDay", m.thirtyDay).Requires(ResourceFeatureThirtyDay, model.Read).Accepts(&ListStoredFactsArgs{})
 }

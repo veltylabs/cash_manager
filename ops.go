@@ -5,6 +5,7 @@ import (
 	"webtyp.com/money"
 	"webtyp.com/router"
 	"webtyp.com/time"
+	"webtyp.com/view"
 
 	"webtyp.com/orm"
 	"webtyp.com/rpc"
@@ -277,39 +278,32 @@ func (m *Module) getToday(ctx router.Context) {
 }
 
 func (m *Module) listStoredFacts(ctx router.Context) {
-	var args ListStoredFactsArgs
+	var args view.ListArgs
 	if err := ctx.Decode(&args); err != nil {
 		rpc.WriteError(ctx, ErrCannotRead)
 		return
 	}
 
-	if args.TenantId == "" {
-		args.TenantId = m.deps.TenantID // the installation's tenant, as device_manager does (ops.go tenantOr); if Module has no tenantID field, stop and say so in the PR
+	qb := m.db.Query(&StoredFact{}).Where(StoredFact_.TenantId).Eq(m.deps.TenantID)
+	if args.Search != "" {
+		qb = qb.Where(StoredFact_.Kind).Like("%" + args.Search + "%")
 	}
+	if args.After != "" {
+		qb = qb.Where(StoredFact_.Id).Gt(args.After)
+	}
+	qb = qb.OrderBy(StoredFact_.Id).Asc().Limit(int(view.Cap(args.Limit)))
 
-	now := time.NowUnix()
-	if args.To == 0 {
-		args.To = now
-	}
-	if args.From == 0 {
-		args.From = now - 30*time.Day
-	}
-
-	qb := m.db.Query(&StoredFact{})
-	qb.Where(StoredFact_.TenantId).Eq(args.TenantId)
-	if args.Scope != "" {
-		qb.Where(StoredFact_.Scope).Eq(args.Scope)
-	}
-	qb.Where(StoredFact_.At).Gte(int64(args.From))
-	qb.Where(StoredFact_.At).Lte(int64(args.To))
-
-	facts, err := ReadAllStoredFact(qb)
+	rows, err := ReadAllStoredFact(qb)
 	if err != nil {
 		rpc.WriteError(ctx, err)
 		return
 	}
 
-	_ = ctx.Encode(&facts)
+	var list StoredFactList
+	for i := range rows {
+		list = append(list, rows[i])
+	}
+	_ = ctx.Encode(&list)
 }
 
 func (m *Module) reorder(ctx router.Context) {

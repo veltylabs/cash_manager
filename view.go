@@ -15,7 +15,7 @@ const (
 // Ejemplo: pres := cashmanager.NewView(caller, view.WithDescription(descCash))
 func NewView(caller router.Caller, opts ...view.Option) view.Presenter {
 	l := view.NewCallerLister(caller,
-		view.Ops{Module: (&StoredFact{}).ModelName(), List: OpListStoredFacts},
+		view.Ops{Module: (&StoredFact{}).ModelName(), List: OpListStoredFacts, Page: view.Page{First: 50, Size: 50, More: true}},
 		func() model.ModelSlice { return &StoredFactList{} })
 	allOpts := append([]view.Option{view.WithTitle(titleCashManager)}, opts...)
 	return view.New(l, &StoredFact{}, allOpts...)
