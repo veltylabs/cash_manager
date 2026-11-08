@@ -2,6 +2,8 @@
 PLAN: "refactor!: cash_manager on the closed crud contract — server tenant, transactional batch, single declarative validation, view.go browser-only"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 14578098458978629659
 ---
 
 > Read AGENTS.md at the repo root before any change.
