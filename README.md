@@ -1,32 +1,70 @@
-# cash_manager
+# Cash Manager
 <img src="docs/img/badges.svg">
 
-Cash shifts per person, opening/closing with cash count, and money.Sink for operational facts.
+Módulo de gestión de caja.
 
-## Operations
+## ¿Por qué existe?
 
-| Name | Input | Permission | Output |
-|---|---|---|---|
-| `OpenShift` | `OpenShiftArgs` | `Create` | `Shift` |
-| `CloseShift` | `CloseShiftArgs` | `Update` | `Shift` |
-| `GetToday` | `GetTodayArgs` | `Read` | `TodayResponse` |
-| `ListStoredFacts` | `view.ListArgs` | `Read` | `StoredFactList` |
-| `Reorder` | - | `Read` | `ReorderResponse` |
-| `ThirtyDay` | `ListStoredFactsArgs` | `Read` | `ThirtyDayResponse` |
+Este módulo permite a los cajeros abrir y cerrar turnos, controlando el dinero esperado en caja comparándolo con los [hechos de dinero](https://webtyp.com/money).
+**Sin esto:** no se sabe cuánto efectivo debería haber al final del día.
+**Con esto:** cada cajero tiene un [turno (cash_shift)](#) donde se acumulan las transacciones de efectivo para su conciliación final.
 
-## Cierre de turno
+## Antes de comenzar
 
-Un turno (`Shift`) calcula su efectivo esperado (`ClosingCashExpected`) considerando exclusivamente los hechos financieros (`money.Fact`):
-- En la misma moneda (`Currency == shift.Currency`).
-- Con medio de pago en efectivo (`Means == money.MeansCash`).
-- Operados por la misma cajera (`Actor == shift.CashierId`).
-- Ocurridos durante la ventana del turno (`At >= shift.OpenedAt` y `At <= shift.ClosedAt`).
+1. Requiere **Go** 1.26 o superior.
+2. Configurar `GOPRIVATE=webtyp.com/*,github.com/veltylabs/*`.
+3. Para instanciar el módulo `New`, se requiere un `*orm.DB` que contenga las tablas creadas por `migrate`, un inyector de dependencias para `Deps.IDs` y un `Deps.TenantID`.
 
-Los pagos con tarjeta (`MeansCard`), transferencias (`MeansTransfer`) u operados por otro personal no alteran el arqueo de efectivo del turno en caja.
+## Guía paso a paso
 
-La lista carga paginada y se busca en el servidor según declara view.Page.
+1. Instanciar el módulo con la base de datos y un ID generator. Ejemplo:
+```go
+package main
 
-## Key Files
+import (
+	"webtyp.com/fmt"
+	"webtyp.com/orm"
+	"webtyp.com/storage/mem"
+	"webtyp.com/unixid"
+	cashmanager "github.com/veltylabs/cash_manager"
+)
 
-- `module.go`, `ops.go`: Module operations and `money.Sink` implementation.
-- `model.go`, `model_orm.go`: Models and database persistence.
+func main() {
+    ids, _ := unixid.NewUnixID()
+	mod := cashmanager.New(orm.New(mem.New()), cashmanager.Deps{IDs: ids, TenantID: "t1"})
+	fmt.Println(mod.ModelName())
+}
+```
+
+2. Abrir y cerrar turnos mediante el API CRUD. Ejemplo detallado en [tests/crud_test.go](tests/crud_test.go).
+3. Para una interfaz completa, usar la demo ejecutable: [seed/demo.go](seed/demo.go).
+
+## Mapa de documentación
+
+| Orden | Documento | Qué pregunta responde y cuándo leerlo |
+|---|---|---|
+| 1 | [README.md](README.md) | ¿Qué es y cómo empezar a usarlo? Leer para setup rápido. |
+| 2 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | ¿Cómo están organizados los flujos y datos? Leer para extender funcionalidades. |
+| 3 | [docs/TESTS.md](docs/TESTS.md) | ¿Qué reglas de negocio están cubiertas y probadas? Leer antes de modificar lógica o entender el dominio. |
+
+## Operaciones
+
+| Operación | Definición |
+|---|---|
+| `OpenShift` | `cash_shift.create` with `{opening_cash, currency}` (el cajero es el invocador) |
+| `CloseShift` | `cash_shift.update` with `Fields: ["closing_cash_counted"]` |
+| `GetToday` | read model `cash_today` |
+| `ListStoredFacts` | `stored_fact.read` |
+| `Reorder` | read model `reorder` |
+| `ThirtyDay` | read model `thirty_day` con filter `{from, to, scope}` |
+
+## Permisos requeridos
+
+| Recurso | Roles recomendados |
+|---|---|
+| `cash_shift` | `cashier` |
+| `stored_fact` | `auditor`, `cashier` |
+| `cash_today` | `cashier` |
+| `reorder` | `cashier`, `manager` |
+| `thirty_day` | `auditor`, `manager` |
+

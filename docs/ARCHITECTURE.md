@@ -1,53 +1,23 @@
-# cash_manager Architecture
+# Arquitectura
 
-Domain scope: Manages cash shifts per person, opening/closing with cash count, and acts as the first consumer of `money.Sink` for operational facts.
+## 1. Visión general en un minuto
 
-## Entities
+Cash Manager es un módulo basado en crud, utilizando el framework `webtyp.com/crud`. Declara modelos persistentes y modelos de lectura plana, usando domain rules inyectadas a través de `webtyp.com/definitionc`.
 
-- `cash_shift`: A person's active cash shift, recording opening and closing cash counts.
-- `stored_fact`: Raw storage of accepted `money.Fact`s keyed by their idempotency key. Used to trace expectations for cash shift close difference.
+## 2. Piezas y estructura
 
-## Patterns
+- **cash_shift**: Tabla transaccional para turnos.
+- **stored_fact**: Tabla de solo lectura de hechos en un ledger.
+- **Modelos de lectura plana** (`cash_today`, `reorder`, `thirty_day`): Consultan de manera eficiente el estado sin unir demasiadas tablas.
+- **Rules (`rule_*.go`)**: Implementación específica de validaciones, escritura y lógica de negocio.
 
-- The module implements `webtyp.com/money`'s `Sink` to accept money facts directly.
-- The shift lifecycle (`OpenShift`, `CloseShift`) computes differences when a shift is closed based on stored facts inside its time window.
-- Read operations are strictly scoped to the `cashier_id` and the `tenant_id` respectively.
+## 3. Flujos paso a paso
 
-## Operations
+- Al aceptar (`Accept`) un hecho transaccional de dinero, este se valida y se inserta silenciosamente en `stored_fact`. Es idempotente.
+- Para **cerrar un turno**, la regla en `rule_cash_shift_update.go` lee todos los hechos relevantes y determina automáticamente el `closing_cash_expected` y la `difference`. Al escribirlos por su cuenta, asegura la integridad, por lo que el cliente solo envía la cantidad en caja contada (`closing_cash_counted`).
+- Los modelos de lectura devuelven directamente un arreglo (`Slice`) generado, ahorrando conversiones extrañas para la capa API.
 
-| Name | Method | Action |
-|---|---|---|
-| OpenShift | `m.openShift` | `Create` |
-| CloseShift | `m.closeShift` | `Update` |
-| GetToday | `m.getToday` | `Read` |
-| ListStoredFacts | `m.listStoredFacts` | `Read` |
-| Reorder | `m.reorder` | `Read` |
-| ThirtyDay | `m.thirtyDay` | `Read` |
+## 4. Contratos y límites de seguridad
 
-## Cierre de turno y arqueo de caja
+El módulo garantiza que un cajero no puede cerrar turnos que no ha abierto, no pueden modificar hechos ya almacenados, y ciertos campos administrativos (`tenant_id`, `status`) solo son modificables desde el servidor, definidos en la estructura con `ServerOnly: true`.
 
-Al cerrar un turno mediante `CloseShift`:
-1. Se recupera el turno por `TenantId` e `Id`.
-2. Se consultan los `stored_fact` del tenant ocurridos entre `shift.OpenedAt` y la hora de cierre.
-3. Se filtra estrictamente por:
-   - `Currency == shift.Currency`
-   - `Means == money.MeansCash`
-   - `Actor == shift.CashierId`
-4. Se calcula el efectivo esperado: `OpeningCash` sumando cobros (`money.Charged`) y restando devoluciones (`money.Refunded`).
-5. La diferencia queda registrada en `shift.Difference = ClosingCashCounted - ClosingCashExpected`.
-
-Cualquier cobro con tarjeta, transferencia o hecho registrado por otro cajero permanece persistido en `stored_fact` para reportería y conciliación global, pero no ingresa al conteo físico de la gaveta de caja de ese turno.
-
-## Composition Root Example
-
-```go
-broker := events.NewBroker()
-deps := cashmanager.Deps{
-	IDs:        unixid.NewGenerator(),
-	TenantID:   "tenant123",
-	Subscriber: broker,
-	// Optional dependencies for views: LowStock, Forecast
-}
-m := cashmanager.New(db, deps)
-m.MountOperations(registry)
-```

@@ -18,7 +18,9 @@ type LowStockItem struct {
 }
 
 func (i *LowStockItem) Schema() []model.Field { return nil }
-func (i *LowStockItem) Pointers() []any { return []any{&i.ItemId, &i.ItemName, &i.Total, &i.MinQuantity} }
+func (i *LowStockItem) Pointers() []any {
+	return []any{&i.ItemId, &i.ItemName, &i.Total, &i.MinQuantity}
+}
 func (i *LowStockItem) EncodeFields(w model.FieldWriter) {
 	w.String("item_id", i.ItemId)
 	w.String("item_name", i.ItemName)
@@ -45,7 +47,9 @@ type ForecastLine struct {
 }
 
 func (f *ForecastLine) Schema() []model.Field { return nil }
-func (f *ForecastLine) Pointers() []any { return []any{&f.ThirdPartyName, &f.Amount, &f.Currency, (*int64)(&f.DueAt)} }
+func (f *ForecastLine) Pointers() []any {
+	return []any{&f.ThirdPartyName, &f.Amount, &f.Currency, (*int64)(&f.DueAt)}
+}
 func (f *ForecastLine) EncodeFields(w model.FieldWriter) {
 	w.String("third_party_name", f.ThirdPartyName)
 	w.Int("amount", f.Amount)

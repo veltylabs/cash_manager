@@ -3,37 +3,42 @@
 package cashmanager
 
 import (
+	"webtyp.com/crud"
+	"webtyp.com/fmt"
 	"webtyp.com/model"
 	"webtyp.com/orm"
-	"webtyp.com/fmt"
 	"webtyp.com/time"
 )
 
 type Shift struct {
-	Id string
-	TenantId string
-	CashierId string
-	Status string
-	OpeningCash int64
-	ClosingCashCounted int64
+	Id                  string
+	TenantId            string
+	CashierId           string
+	Status              string
+	OpeningCash         int64
+	ClosingCashCounted  int64
 	ClosingCashExpected int64
-	Difference int64
-	Currency string
-	OpenedAt time.Unix
-	ClosedAt time.Unix
-	UpdatedAt time.Nano
+	Difference          int64
+	Currency            string
+	OpenedAt            time.Unix
+	ClosedAt            time.Unix
+	UpdatedAt           time.Nano
 }
 
 func (m *Shift) ModelName() string { return "cash_shift" }
 
 func (m *Shift) Schema() []model.Field { return ShiftModel.Fields }
 
-func (m *Shift) Pointers() []any { return []any{&m.Id, &m.TenantId, &m.CashierId, &m.Status, &m.OpeningCash, &m.ClosingCashCounted, &m.ClosingCashExpected, &m.Difference, &m.Currency, (*int64)(&m.OpenedAt), (*int64)(&m.ClosedAt), (*int64)(&m.UpdatedAt)} }
+func (m *Shift) Pointers() []any {
+	return []any{&m.Id, &m.TenantId, &m.CashierId, &m.Status, &m.OpeningCash, &m.ClosingCashCounted, &m.ClosingCashExpected, &m.Difference, &m.Currency, (*int64)(&m.OpenedAt), (*int64)(&m.ClosedAt), (*int64)(&m.UpdatedAt)}
+}
 
 func (m *Shift) IsNil() bool { return m == nil }
 
 func (m *Shift) EncodeFields(w model.FieldWriter) {
-	if m.Id != "" { w.String("id", m.Id) }
+	if m.Id != "" {
+		w.String("id", m.Id)
+	}
 	w.String("tenant_id", m.TenantId)
 	w.String("cashier_id", m.CashierId)
 	w.String("status", m.Status)
@@ -43,31 +48,59 @@ func (m *Shift) EncodeFields(w model.FieldWriter) {
 	w.Int("difference", m.Difference)
 	w.String("currency", m.Currency)
 	w.Int("opened_at", int64(m.OpenedAt))
-	if m.ClosedAt != 0 { w.Int("closed_at", int64(m.ClosedAt)) }
-	if m.UpdatedAt != 0 { w.Int("updated_at", int64(m.UpdatedAt)) }
+	if m.ClosedAt != 0 {
+		w.Int("closed_at", int64(m.ClosedAt))
+	}
+	if m.UpdatedAt != 0 {
+		w.Int("updated_at", int64(m.UpdatedAt))
+	}
 }
 
 func (m *Shift) DecodeFields(r model.FieldReader) {
-	if v, ok := r.String("id"); ok { m.Id = v }
-	if v, ok := r.String("tenant_id"); ok { m.TenantId = v }
-	if v, ok := r.String("cashier_id"); ok { m.CashierId = v }
-	if v, ok := r.String("status"); ok { m.Status = v }
-	if v, ok := r.Int("opening_cash"); ok { m.OpeningCash = v }
-	if v, ok := r.Int("closing_cash_counted"); ok { m.ClosingCashCounted = v }
-	if v, ok := r.Int("closing_cash_expected"); ok { m.ClosingCashExpected = v }
-	if v, ok := r.Int("difference"); ok { m.Difference = v }
-	if v, ok := r.String("currency"); ok { m.Currency = v }
-	if v, ok := r.Int("opened_at"); ok { m.OpenedAt = time.Unix(v) }
-	if v, ok := r.Int("closed_at"); ok { m.ClosedAt = time.Unix(v) }
-	if v, ok := r.Int("updated_at"); ok { m.UpdatedAt = time.Nano(v) }
+	if v, ok := r.String("id"); ok {
+		m.Id = v
+	}
+	if v, ok := r.String("tenant_id"); ok {
+		m.TenantId = v
+	}
+	if v, ok := r.String("cashier_id"); ok {
+		m.CashierId = v
+	}
+	if v, ok := r.String("status"); ok {
+		m.Status = v
+	}
+	if v, ok := r.Int("opening_cash"); ok {
+		m.OpeningCash = v
+	}
+	if v, ok := r.Int("closing_cash_counted"); ok {
+		m.ClosingCashCounted = v
+	}
+	if v, ok := r.Int("closing_cash_expected"); ok {
+		m.ClosingCashExpected = v
+	}
+	if v, ok := r.Int("difference"); ok {
+		m.Difference = v
+	}
+	if v, ok := r.String("currency"); ok {
+		m.Currency = v
+	}
+	if v, ok := r.Int("opened_at"); ok {
+		m.OpenedAt = time.Unix(v)
+	}
+	if v, ok := r.Int("closed_at"); ok {
+		m.ClosedAt = time.Unix(v)
+	}
+	if v, ok := r.Int("updated_at"); ok {
+		m.UpdatedAt = time.Nano(v)
+	}
 }
 
 type ShiftList []*Shift
 
-func (s *ShiftList) Len() int             { return len(*s) }
-func (s *ShiftList) At(i int) model.Fielder { return (*s)[i] }
-func (s *ShiftList) Append() model.Fielder  { v := &Shift{}; *s = append(*s, v); return v }
-func (s *ShiftList) IsNil() bool          { return s == nil }
+func (s *ShiftList) Len() int                         { return len(*s) }
+func (s *ShiftList) At(i int) model.Fielder           { return (*s)[i] }
+func (s *ShiftList) Append() model.Fielder            { v := &Shift{}; *s = append(*s, v); return v }
+func (s *ShiftList) IsNil() bool                      { return s == nil }
 func (s *ShiftList) EncodeFields(_ model.FieldWriter) {}
 func (s *ShiftList) DecodeFields(_ model.FieldReader) {}
 
@@ -75,32 +108,35 @@ func (m *Shift) Validate(action byte) error {
 	return model.ValidateFields(action, m)
 }
 
+func (*Shift) Allow() model.Action     { return ShiftModel.Allow }
+func (*ShiftList) Allow() model.Action { return ShiftModel.Allow }
+
 var Shift_ = struct {
-	Id string
-	TenantId string
-	CashierId string
-	Status string
-	OpeningCash string
-	ClosingCashCounted string
+	Id                  string
+	TenantId            string
+	CashierId           string
+	Status              string
+	OpeningCash         string
+	ClosingCashCounted  string
 	ClosingCashExpected string
-	Difference string
-	Currency string
-	OpenedAt string
-	ClosedAt string
-	UpdatedAt string
+	Difference          string
+	Currency            string
+	OpenedAt            string
+	ClosedAt            string
+	UpdatedAt           string
 }{
-	Id: "id",
-	TenantId: "tenant_id",
-	CashierId: "cashier_id",
-	Status: "status",
-	OpeningCash: "opening_cash",
-	ClosingCashCounted: "closing_cash_counted",
+	Id:                  "id",
+	TenantId:            "tenant_id",
+	CashierId:           "cashier_id",
+	Status:              "status",
+	OpeningCash:         "opening_cash",
+	ClosingCashCounted:  "closing_cash_counted",
 	ClosingCashExpected: "closing_cash_expected",
-	Difference: "difference",
-	Currency: "currency",
-	OpenedAt: "opened_at",
-	ClosedAt: "closed_at",
-	UpdatedAt: "updated_at",
+	Difference:          "difference",
+	Currency:            "currency",
+	OpenedAt:            "opened_at",
+	ClosedAt:            "closed_at",
+	UpdatedAt:           "updated_at",
 }
 
 func ReadOneShift(qb *orm.QB, model *Shift) (*Shift, error) {
@@ -121,27 +157,29 @@ func ReadAllShift(qb *orm.QB) (ShiftList, error) {
 }
 
 type StoredFact struct {
-	Id string
-	TenantId string
-	Kind string
-	Side int64
-	Currency string
-	Amount int64
-	Scope string
+	Id         string
+	TenantId   string
+	Kind       string
+	Side       int64
+	Currency   string
+	Amount     int64
+	Scope      string
 	SourceType string
-	SourceId string
-	Party string
-	At time.Unix
-	DueAt time.Unix
-	Means string
-	Actor string
+	SourceId   string
+	Party      string
+	At         time.Unix
+	DueAt      time.Unix
+	Means      string
+	Actor      string
 }
 
 func (m *StoredFact) ModelName() string { return "stored_fact" }
 
 func (m *StoredFact) Schema() []model.Field { return StoredFactModel.Fields }
 
-func (m *StoredFact) Pointers() []any { return []any{&m.Id, &m.TenantId, &m.Kind, &m.Side, &m.Currency, &m.Amount, &m.Scope, &m.SourceType, &m.SourceId, &m.Party, (*int64)(&m.At), (*int64)(&m.DueAt), &m.Means, &m.Actor} }
+func (m *StoredFact) Pointers() []any {
+	return []any{&m.Id, &m.TenantId, &m.Kind, &m.Side, &m.Currency, &m.Amount, &m.Scope, &m.SourceType, &m.SourceId, &m.Party, (*int64)(&m.At), (*int64)(&m.DueAt), &m.Means, &m.Actor}
+}
 
 func (m *StoredFact) IsNil() bool { return m == nil }
 
@@ -155,36 +193,72 @@ func (m *StoredFact) EncodeFields(w model.FieldWriter) {
 	w.String("scope", m.Scope)
 	w.String("source_type", m.SourceType)
 	w.String("source_id", m.SourceId)
-	if m.Party != "" { w.String("party", m.Party) }
+	if m.Party != "" {
+		w.String("party", m.Party)
+	}
 	w.Int("at", int64(m.At))
-	if m.DueAt != 0 { w.Int("due_at", int64(m.DueAt)) }
-	if m.Means != "" { w.String("means", m.Means) }
-	if m.Actor != "" { w.String("actor", m.Actor) }
+	if m.DueAt != 0 {
+		w.Int("due_at", int64(m.DueAt))
+	}
+	if m.Means != "" {
+		w.String("means", m.Means)
+	}
+	if m.Actor != "" {
+		w.String("actor", m.Actor)
+	}
 }
 
 func (m *StoredFact) DecodeFields(r model.FieldReader) {
-	if v, ok := r.String("id"); ok { m.Id = v }
-	if v, ok := r.String("tenant_id"); ok { m.TenantId = v }
-	if v, ok := r.String("kind"); ok { m.Kind = v }
-	if v, ok := r.Int("side"); ok { m.Side = v }
-	if v, ok := r.String("currency"); ok { m.Currency = v }
-	if v, ok := r.Int("amount"); ok { m.Amount = v }
-	if v, ok := r.String("scope"); ok { m.Scope = v }
-	if v, ok := r.String("source_type"); ok { m.SourceType = v }
-	if v, ok := r.String("source_id"); ok { m.SourceId = v }
-	if v, ok := r.String("party"); ok { m.Party = v }
-	if v, ok := r.Int("at"); ok { m.At = time.Unix(v) }
-	if v, ok := r.Int("due_at"); ok { m.DueAt = time.Unix(v) }
-	if v, ok := r.String("means"); ok { m.Means = v }
-	if v, ok := r.String("actor"); ok { m.Actor = v }
+	if v, ok := r.String("id"); ok {
+		m.Id = v
+	}
+	if v, ok := r.String("tenant_id"); ok {
+		m.TenantId = v
+	}
+	if v, ok := r.String("kind"); ok {
+		m.Kind = v
+	}
+	if v, ok := r.Int("side"); ok {
+		m.Side = v
+	}
+	if v, ok := r.String("currency"); ok {
+		m.Currency = v
+	}
+	if v, ok := r.Int("amount"); ok {
+		m.Amount = v
+	}
+	if v, ok := r.String("scope"); ok {
+		m.Scope = v
+	}
+	if v, ok := r.String("source_type"); ok {
+		m.SourceType = v
+	}
+	if v, ok := r.String("source_id"); ok {
+		m.SourceId = v
+	}
+	if v, ok := r.String("party"); ok {
+		m.Party = v
+	}
+	if v, ok := r.Int("at"); ok {
+		m.At = time.Unix(v)
+	}
+	if v, ok := r.Int("due_at"); ok {
+		m.DueAt = time.Unix(v)
+	}
+	if v, ok := r.String("means"); ok {
+		m.Means = v
+	}
+	if v, ok := r.String("actor"); ok {
+		m.Actor = v
+	}
 }
 
 type StoredFactList []*StoredFact
 
-func (s *StoredFactList) Len() int             { return len(*s) }
-func (s *StoredFactList) At(i int) model.Fielder { return (*s)[i] }
-func (s *StoredFactList) Append() model.Fielder  { v := &StoredFact{}; *s = append(*s, v); return v }
-func (s *StoredFactList) IsNil() bool          { return s == nil }
+func (s *StoredFactList) Len() int                         { return len(*s) }
+func (s *StoredFactList) At(i int) model.Fielder           { return (*s)[i] }
+func (s *StoredFactList) Append() model.Fielder            { v := &StoredFact{}; *s = append(*s, v); return v }
+func (s *StoredFactList) IsNil() bool                      { return s == nil }
 func (s *StoredFactList) EncodeFields(_ model.FieldWriter) {}
 func (s *StoredFactList) DecodeFields(_ model.FieldReader) {}
 
@@ -192,40 +266,43 @@ func (m *StoredFact) Validate(action byte) error {
 	return model.ValidateFields(action, m)
 }
 
+func (*StoredFact) Allow() model.Action     { return StoredFactModel.Allow }
+func (*StoredFactList) Allow() model.Action { return StoredFactModel.Allow }
+
 func (m *StoredFact) Item() model.Item {
 	return model.Item{ID: m.Id, Label: m.Kind, Description: model.JoinItem(m.Currency, fmt.Convert(m.Amount).String(), m.Scope, m.SourceType, m.SourceId)}
 }
 
 var StoredFact_ = struct {
-	Id string
-	TenantId string
-	Kind string
-	Side string
-	Currency string
-	Amount string
-	Scope string
+	Id         string
+	TenantId   string
+	Kind       string
+	Side       string
+	Currency   string
+	Amount     string
+	Scope      string
 	SourceType string
-	SourceId string
-	Party string
-	At string
-	DueAt string
-	Means string
-	Actor string
+	SourceId   string
+	Party      string
+	At         string
+	DueAt      string
+	Means      string
+	Actor      string
 }{
-	Id: "id",
-	TenantId: "tenant_id",
-	Kind: "kind",
-	Side: "side",
-	Currency: "currency",
-	Amount: "amount",
-	Scope: "scope",
+	Id:         "id",
+	TenantId:   "tenant_id",
+	Kind:       "kind",
+	Side:       "side",
+	Currency:   "currency",
+	Amount:     "amount",
+	Scope:      "scope",
 	SourceType: "source_type",
-	SourceId: "source_id",
-	Party: "party",
-	At: "at",
-	DueAt: "due_at",
-	Means: "means",
-	Actor: "actor",
+	SourceId:   "source_id",
+	Party:      "party",
+	At:         "at",
+	DueAt:      "due_at",
+	Means:      "means",
+	Actor:      "actor",
 }
 
 func ReadOneStoredFact(qb *orm.QB, model *StoredFact) (*StoredFact, error) {
@@ -245,3 +322,254 @@ func ReadAllStoredFact(qb *orm.QB) (StoredFactList, error) {
 	return results, err
 }
 
+type TodayShift struct {
+	Id          string
+	CashierId   string
+	Status      string
+	OpeningCash int64
+	Currency    string
+	OpenedAt    time.Unix
+	FactsCount  int64
+}
+
+func (m *TodayShift) ModelName() string { return "cash_today" }
+
+func (m *TodayShift) Wire() bool { return true }
+
+func (m *TodayShift) Schema() []model.Field { return TodayShiftModel.Fields }
+
+func (m *TodayShift) Pointers() []any {
+	return []any{&m.Id, &m.CashierId, &m.Status, &m.OpeningCash, &m.Currency, (*int64)(&m.OpenedAt), &m.FactsCount}
+}
+
+func (m *TodayShift) IsNil() bool { return m == nil }
+
+func (m *TodayShift) EncodeFields(w model.FieldWriter) {
+	w.String("id", m.Id)
+	w.String("cashier_id", m.CashierId)
+	w.String("status", m.Status)
+	w.Int("opening_cash", m.OpeningCash)
+	w.String("currency", m.Currency)
+	w.Int("opened_at", int64(m.OpenedAt))
+	w.Int("facts_count", m.FactsCount)
+}
+
+func (m *TodayShift) DecodeFields(r model.FieldReader) {
+	if v, ok := r.String("id"); ok {
+		m.Id = v
+	}
+	if v, ok := r.String("cashier_id"); ok {
+		m.CashierId = v
+	}
+	if v, ok := r.String("status"); ok {
+		m.Status = v
+	}
+	if v, ok := r.Int("opening_cash"); ok {
+		m.OpeningCash = v
+	}
+	if v, ok := r.String("currency"); ok {
+		m.Currency = v
+	}
+	if v, ok := r.Int("opened_at"); ok {
+		m.OpenedAt = time.Unix(v)
+	}
+	if v, ok := r.Int("facts_count"); ok {
+		m.FactsCount = v
+	}
+}
+
+type TodayShiftList []*TodayShift
+
+func (s *TodayShiftList) Len() int                         { return len(*s) }
+func (s *TodayShiftList) At(i int) model.Fielder           { return (*s)[i] }
+func (s *TodayShiftList) Append() model.Fielder            { v := &TodayShift{}; *s = append(*s, v); return v }
+func (s *TodayShiftList) IsNil() bool                      { return s == nil }
+func (s *TodayShiftList) EncodeFields(_ model.FieldWriter) {}
+func (s *TodayShiftList) DecodeFields(_ model.FieldReader) {}
+
+func (m *TodayShift) Validate(action byte) error {
+	return model.ValidateFields(action, m)
+}
+
+type Reorder struct {
+	ItemId      string
+	ItemName    string
+	Total       float64
+	MinQuantity float64
+}
+
+func (m *Reorder) ModelName() string { return "reorder" }
+
+func (m *Reorder) Wire() bool { return true }
+
+func (m *Reorder) Schema() []model.Field { return ReorderModel.Fields }
+
+func (m *Reorder) Pointers() []any { return []any{&m.ItemId, &m.ItemName, &m.Total, &m.MinQuantity} }
+
+func (m *Reorder) IsNil() bool { return m == nil }
+
+func (m *Reorder) EncodeFields(w model.FieldWriter) {
+	w.String("item_id", m.ItemId)
+	w.String("item_name", m.ItemName)
+	w.Float("total", m.Total)
+	w.Float("min_quantity", m.MinQuantity)
+}
+
+func (m *Reorder) DecodeFields(r model.FieldReader) {
+	if v, ok := r.String("item_id"); ok {
+		m.ItemId = v
+	}
+	if v, ok := r.String("item_name"); ok {
+		m.ItemName = v
+	}
+	if v, ok := r.Float("total"); ok {
+		m.Total = v
+	}
+	if v, ok := r.Float("min_quantity"); ok {
+		m.MinQuantity = v
+	}
+}
+
+type ReorderList []*Reorder
+
+func (s *ReorderList) Len() int                         { return len(*s) }
+func (s *ReorderList) At(i int) model.Fielder           { return (*s)[i] }
+func (s *ReorderList) Append() model.Fielder            { v := &Reorder{}; *s = append(*s, v); return v }
+func (s *ReorderList) IsNil() bool                      { return s == nil }
+func (s *ReorderList) EncodeFields(_ model.FieldWriter) {}
+func (s *ReorderList) DecodeFields(_ model.FieldReader) {}
+
+func (m *Reorder) Validate(action byte) error {
+	return model.ValidateFields(action, m)
+}
+
+type ThirtyDay struct {
+	From     time.Unix
+	To       time.Unix
+	Scope    string
+	RowType  string
+	Label    string
+	Amount   int64
+	Currency string
+	DueAt    time.Unix
+}
+
+func (m *ThirtyDay) ModelName() string { return "thirty_day" }
+
+func (m *ThirtyDay) Wire() bool { return true }
+
+func (m *ThirtyDay) Schema() []model.Field { return ThirtyDayModel.Fields }
+
+func (m *ThirtyDay) Pointers() []any {
+	return []any{(*int64)(&m.From), (*int64)(&m.To), &m.Scope, &m.RowType, &m.Label, &m.Amount, &m.Currency, (*int64)(&m.DueAt)}
+}
+
+func (m *ThirtyDay) IsNil() bool { return m == nil }
+
+func (m *ThirtyDay) EncodeFields(w model.FieldWriter) {
+	if m.From != 0 {
+		w.Int("from", int64(m.From))
+	}
+	if m.To != 0 {
+		w.Int("to", int64(m.To))
+	}
+	if m.Scope != "" {
+		w.String("scope", m.Scope)
+	}
+	if m.RowType != "" {
+		w.String("row_type", m.RowType)
+	}
+	if m.Label != "" {
+		w.String("label", m.Label)
+	}
+	if m.Amount != 0 {
+		w.Int("amount", m.Amount)
+	}
+	if m.Currency != "" {
+		w.String("currency", m.Currency)
+	}
+	if m.DueAt != 0 {
+		w.Int("due_at", int64(m.DueAt))
+	}
+}
+
+func (m *ThirtyDay) DecodeFields(r model.FieldReader) {
+	if v, ok := r.Int("from"); ok {
+		m.From = time.Unix(v)
+	}
+	if v, ok := r.Int("to"); ok {
+		m.To = time.Unix(v)
+	}
+	if v, ok := r.String("scope"); ok {
+		m.Scope = v
+	}
+	if v, ok := r.String("row_type"); ok {
+		m.RowType = v
+	}
+	if v, ok := r.String("label"); ok {
+		m.Label = v
+	}
+	if v, ok := r.Int("amount"); ok {
+		m.Amount = v
+	}
+	if v, ok := r.String("currency"); ok {
+		m.Currency = v
+	}
+	if v, ok := r.Int("due_at"); ok {
+		m.DueAt = time.Unix(v)
+	}
+}
+
+type ThirtyDayList []*ThirtyDay
+
+func (s *ThirtyDayList) Len() int                         { return len(*s) }
+func (s *ThirtyDayList) At(i int) model.Fielder           { return (*s)[i] }
+func (s *ThirtyDayList) Append() model.Fielder            { v := &ThirtyDay{}; *s = append(*s, v); return v }
+func (s *ThirtyDayList) IsNil() bool                      { return s == nil }
+func (s *ThirtyDayList) EncodeFields(_ model.FieldWriter) {}
+func (s *ThirtyDayList) DecodeFields(_ model.FieldReader) {}
+
+func (m *ThirtyDay) Validate(action byte) error {
+	return model.ValidateFields(action, m)
+}
+
+// ModelName is the module identity: Definition.Name.
+const ModelName = "cash_manager"
+
+func (m *Module) ModelName() string { return ModelName }
+
+// Definition is the module's declaration (definition.go); crud.Mount compares it with what MountOperations mounted.
+func (m *Module) Definition() model.ModuleDefinition { return Definition }
+
+// MountOperations offers every entity of the module: the actions its model allows, with crud's validation and the rules written in rule_*.go.
+func (m *Module) MountOperations(reg crud.Registry) {
+	reg.AddStoredEntity(crud.StoredEntity{
+		Model:   &Shift{},
+		NewList: func() model.ModelSlice { return &ShiftList{} },
+		Store:   m.StoreShift(),
+		Rules:   ShiftModel.Rules,
+		MFA:     ShiftModel.MFA,
+		Create: func(a crud.CurrentUser, tx crud.Tx, rec model.Model) (crud.RuleAnswer, error) {
+			return rec.(*Shift).Create(a, tx, m)
+		},
+		Update: func(a crud.CurrentUser, tx crud.Tx, old, next model.Model, fields []string) (crud.RuleAnswer, error) {
+			return next.(*Shift).Update(a, tx, old.(*Shift), fields, m)
+		},
+	})
+	reg.AddStoredEntity(crud.StoredEntity{
+		Model:   &StoredFact{},
+		NewList: func() model.ModelSlice { return &StoredFactList{} },
+		Store:   m.StoreStoredFact(),
+		Rules:   StoredFactModel.Rules,
+		MFA:     StoredFactModel.MFA,
+	})
+	reg.AddReadOnlyEntity(&TodayShift{}, func() model.Model { return &TodayShift{} }, func(a crud.CurrentUser, args crud.ReadArgs, filter model.Model) (model.ModelSlice, error) {
+		return (&TodayShift{}).Read(a, filter.(*TodayShift), args, m)
+	})
+	reg.AddReadOnlyEntity(&Reorder{}, func() model.Model { return &Reorder{} }, func(a crud.CurrentUser, args crud.ReadArgs, filter model.Model) (model.ModelSlice, error) {
+		return (&Reorder{}).Read(a, filter.(*Reorder), args, m)
+	})
+	reg.AddReadOnlyEntity(&ThirtyDay{}, func() model.Model { return &ThirtyDay{} }, func(a crud.CurrentUser, args crud.ReadArgs, filter model.Model) (model.ModelSlice, error) {
+		return (&ThirtyDay{}).Read(a, filter.(*ThirtyDay), args, m)
+	})
+}

@@ -2,8 +2,10 @@
 PLAN: "refactor!: cash_manager on the crud-by-declaration framework — Allow and Rules in definition.go, persistence by crud, only domain rules in rule files"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 10543397699119517187
+PR: https://github.com/veltylabs/cash_manager/pull/9
+REVIEWED_COMMIT: 140187f8a44351b58e4071c31b58a8b98a6ea6c9
 ---
 
 > Read AGENTS.md at the repo root before any change.

@@ -3,8 +3,10 @@
   "keys": {
     "Counted cash": ["Efectivo contado", "清点现金", "गिना गया नकद", "النقد المحسوب", "Dinheiro contado", "Espèces comptées", "Gezähltes Bargeld", "Подсчитанные наличные"],
     "Expected cash": ["Efectivo esperado", "预期现金", "अपेक्षित नकद", "النقد المتوقع", "Dinheiro esperado", "Espèces attendues", "Erwartetes Bargeld", "Ожидаемые наличные"],
+    "a shift is already open for this cashier": ["", "", "", "", "", "", "", ""],
     "actor": ["actor", "操作者", "कर्ता", "الفاعل", "ator", "acteur", "Akteur", "субъект"],
     "at": ["en", "于", "पर", "في", "em", "à", "um", "в"],
+    "cash_manager: cannot read the request": ["", "", "", "", "", "", "", ""],
     "cashier id": ["id de cajero", "出纳员编号", "कैशियर आईडी", "معرف أمين الصندوق", "id do caixa", "id du caissier", "Kassierer-ID", "id кассира"],
     "closed at": ["cerrado en", "关闭于", "पर बंद", "أغلق في", "fechado em", "fermé à", "geschlossen um", "закрыто в"],
     "difference": ["diferencia", "差异", "अंतर", "الفرق", "diferença", "différence", "Differenz", "разница"],
@@ -14,8 +16,11 @@
     "opening cash": ["efectivo inicial", "期初现金", "प्रारंभिक नकद", "النقد الافتتاحي", "dinheiro inicial", "espèces d'ouverture", "Anfangsbestand", "начальные наличные"],
     "party": ["parte", "主体", "पक्ष", "الطرف", "parte", "partie", "Partei", "сторона"],
     "scope": ["alcance", "范围", "दायरा", "النطاق", "escopo", "portée", "Umfang", "область"],
+    "shift already closed": ["", "", "", "", "", "", "", ""],
+    "shift not found": ["", "", "", "", "", "", "", ""],
     "side": ["lado", "方向", "पक्ष", "الجانب", "lado", "côté", "Seite", "сторона"],
     "source id": ["id de origen", "来源编号", "स्रोत आईडी", "معرف المصدر", "id de origem", "id source", "Quell-ID", "id источника"],
-    "source type": ["tipo de origen", "来源类型", "स्रोत प्रकार", "نوع المصدر", "tipo de origem", "type de source", "Quelltyp", "тип источника"]
+    "source type": ["tipo de origen", "来源类型", "स्रोत प्रकार", "نوع المصدر", "tipo de origem", "type de source", "Quelltyp", "тип источника"],
+    "validation failed": ["", "", "", "", "", "", "", ""]
   }
 }
