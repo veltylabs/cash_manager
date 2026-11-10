@@ -1,64 +1,50 @@
 package cashmanager
 
 import (
-	"strings"
-
-
 	"webtyp.com/fmt"
 	"webtyp.com/model"
 	"webtyp.com/money"
 	"webtyp.com/orm"
-	"webtyp.com/router"
-	"webtyp.com/view"
+	"webtyp.com/storage"
+	"webtyp.com/crud"
 )
 
 var _ money.Sink = (*Module)(nil)
-var _ router.OperationModule = (*Module)(nil)
 
+// Module is the cash module: shifts of the cashiers and the facts money events leave behind.
 type Module struct {
-	db   *orm.DB
-	deps Deps
+	db    *orm.DB
+	store *orm.Store
+	deps  Deps
 }
 
+func (m *Module) Deps() *Deps { return &m.deps }
+
+// New connects the module to a database. Deps.IDs and Deps.TenantID are required.
+//
+// Example: m := cashmanager.New(orm.New(mem.New()), cashmanager.Deps{IDs: ids, TenantID: "t1"})
 func New(db *orm.DB, deps Deps) *Module {
 	if deps.IDs == nil {
-		panic("cashmanager: missing IDs dependency")
+		panic("cash_manager: missing IDs dependency")
 	}
-	m := &Module{
-		db:   db,
-		deps: deps,
-	}
-
+	m := &Module{db: db, store: orm.TenantStore(db, deps.TenantID, deps.IDs), deps: deps}
 	if deps.Subscriber != nil {
 		money.Subscribe(deps.Subscriber, m, func(err error) {
-			fmt.Println("cashmanager: failed to accept fact:", err)
+			fmt.Println("cash_manager: failed to accept fact:", err)
 		})
 	}
-
 	return m
 }
 
-func (m *Module) ModelName() string {
-	return "cashmanager"
-}
-
-func (m *Module) MountOperations(reg router.OperationRegistry) {
-	reg.Operation("OpenShift", m.openShift).Requires(model.ResourceOf(&ShiftModel), model.Create).Accepts(&OpenShiftArgs{})
-	reg.Operation("CloseShift", m.closeShift).Requires(model.ResourceOf(&ShiftModel), model.Update).Accepts(&CloseShiftArgs{})
-	reg.Operation("GetToday", m.getToday).Requires(model.ResourceOf(&ShiftModel), model.Read).Accepts(&GetTodayArgs{})
-	reg.Operation("ListStoredFacts", m.listStoredFacts).Requires(model.ResourceOf(&StoredFactModel), model.Read).Accepts(&view.ListArgs{})
-	reg.Operation("Reorder", m.reorder).Requires(ResourceFeatureReorder, model.Read).Accepts(nil)
-	reg.Operation("ThirtyDay", m.thirtyDay).Requires(ResourceFeatureThirtyDay, model.Read).Accepts(&ListStoredFactsArgs{})
-}
-
+// Accept stores a money fact once: a fact already stored is not an error.
+//
+// Example: err := m.Accept(money.Fact{Kind: money.Charged, ...})
 func (m *Module) Accept(f money.Fact) error {
 	if err := f.Validate(); err != nil {
 		return err
 	}
-
 	fact := &StoredFact{
 		Id:         f.Key(),
-		TenantId:   m.deps.TenantID, // using module's tenant
 		Kind:       string(f.Kind),
 		Side:       int64(f.Side),
 		Amount:     f.Amount.Amount,
@@ -72,17 +58,12 @@ func (m *Module) Accept(f money.Fact) error {
 		Means:      string(f.Means),
 		Actor:      f.Actor,
 	}
-
-	if err := fact.Validate(model.ActionCreate); err != nil {
+	if err := model.ValidateFields(model.ActionCreate, fact); err != nil {
 		return err
 	}
-
-	err := m.db.Create(fact)
-	if err != nil {
-		if strings.Contains(err.Error(), "duplicate") || strings.Contains(err.Error(), "unique") {
-			return nil // idempotent
-		}
-		return err
+	err := m.store.Atomic(func(tx crud.Tx) error { return tx.Create(fact) })
+	if err != nil && storage.IsDuplicate(err) {
+		return nil // idempotent: the same fact arrives twice
 	}
-	return nil
+	return err
 }
