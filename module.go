@@ -1,12 +1,12 @@
 package cashmanager
 
 import (
+	"webtyp.com/crud"
 	"webtyp.com/fmt"
 	"webtyp.com/model"
 	"webtyp.com/money"
 	"webtyp.com/orm"
 	"webtyp.com/storage"
-	"webtyp.com/crud"
 )
 
 var _ money.Sink = (*Module)(nil)
@@ -44,6 +44,7 @@ func (m *Module) Accept(f money.Fact) error {
 		return err
 	}
 	fact := &StoredFact{
+		TenantId:   m.deps.TenantID,
 		Id:         f.Key(),
 		Kind:       string(f.Kind),
 		Side:       int64(f.Side),

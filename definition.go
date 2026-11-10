@@ -12,7 +12,7 @@ const (
 )
 
 var ShiftModel = model.Definition{
-	Name: "cash_shift",
+	Name:  "cash_shift",
 	Allow: model.Create | model.Read | model.Update,
 	Rules: model.Rules{Create: model.AddMyBusinessRule, Read: model.HaveNoBusinessRule, Update: model.AddMyBusinessRule},
 	Fields: model.Fields{
@@ -32,7 +32,7 @@ var ShiftModel = model.Definition{
 }
 
 var StoredFactModel = model.Definition{
-	Name: "stored_fact",
+	Name:  "stored_fact",
 	Allow: model.Read,
 	Rules: model.Rules{Read: model.HaveNoBusinessRule},
 	Fields: model.Fields{
@@ -104,6 +104,6 @@ var ThirtyDayModel = model.Definition{
 }
 
 var Definition = model.ModuleDefinition{
-	Name: "cash_manager",
+	Name:     "cash_manager",
 	Entities: []model.Definition{ShiftModel, StoredFactModel, TodayShiftModel, ReorderModel, ThirtyDayModel},
 }

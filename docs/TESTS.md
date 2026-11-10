@@ -13,3 +13,7 @@
 | [TestMount_MatchesDefinition](../tests/crud_test.go) | El módulo se puede montar exitosamente según su definición |
 | [TestCreate_PublishesChange](../tests/crud_test.go) | Publicación de eventos de cambio al crear entidades |
 | [TestDemo_Valid](../tests/demo_test.go) | La demostración inicia correctamente |
+| [TestAccept_SameFactTwiceIsStoredOnce](../tests/accept_test.go) | un hecho que llega dos veces se guarda una sola vez (sin error la segunda) |
+| [TestAccept_InvalidFactIsRefused](../tests/accept_test.go) | un hecho vacío se rechaza y no deja filas |
+| [TestAccept_FeeFactAppearsInTheThirtyDayView](../tests/accept_test.go) | la comisión (un devengo con vencimiento) sale como una fila `fact` de 447 en la vista a 30 días |
+| [TestAccept_ArrivesThroughTheMoneyTopic](../tests/accept_test.go) | un hecho publicado en el tópico de dinero lo guarda el módulo suscrito |

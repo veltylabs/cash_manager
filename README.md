@@ -1,4 +1,5 @@
 # Cash Manager
+<img src="docs/img/badges.svg">
 
 Módulo de gestión de caja.
 

@@ -3,8 +3,8 @@
 package tests
 
 import (
-	"testing"
 	"github.com/veltylabs/cash_manager/seed"
+	"testing"
 )
 
 func TestDemo_Valid(t *testing.T) {
