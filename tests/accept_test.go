@@ -6,7 +6,7 @@ import (
 	cashmanager "github.com/veltylabs/cash_manager"
 	"webtyp.com/crud"
 	"webtyp.com/events"
-	"webtyp.com/events/mock"
+	"webtyp.com/events/inprocess"
 	"webtyp.com/model"
 	"webtyp.com/money"
 	"webtyp.com/orm"
@@ -64,7 +64,7 @@ func TestAccept_FeeFactAppearsInTheThirtyDayView(t *testing.T) {
 }
 
 func TestAccept_ArrivesThroughTheMoneyTopic(t *testing.T) {
-	broker := &mock.Broker{}
+	broker := &inprocess.Broker{}
 	ids, _ := unixid.NewUnixID()
 	m := cashmanager.New(orm.New(mem.New()), cashmanager.Deps{IDs: ids, TenantID: "t1", Subscriber: broker})
 	fact := cashFact("src2", 1000, "u1", time.NowUnix())
