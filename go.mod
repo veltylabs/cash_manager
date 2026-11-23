@@ -13,7 +13,7 @@ require (
 	webtyp.com/orm v0.12.33
 	webtyp.com/router v0.4.22
 	webtyp.com/storage v0.2.8
-	webtyp.com/time v0.6.4
+	webtyp.com/time v0.6.7
 	webtyp.com/unixid v0.3.2
 	webtyp.com/view v0.6.74
 )
@@ -21,7 +21,7 @@ require (
 require (
 	webtyp.com/calendar v0.1.0 // indirect
 	webtyp.com/definitioncheck v0.0.3 // indirect
-	webtyp.com/dom v0.13.29 // indirect
+	webtyp.com/dom v0.13.34 // indirect
 	webtyp.com/escape v0.1.0 // indirect
 	webtyp.com/json v0.5.40 // indirect
 	webtyp.com/msgtype v0.1.0 // indirect
